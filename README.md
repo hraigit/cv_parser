@@ -174,7 +174,7 @@ DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/cv_parser_db
 
 # OpenAI
 OPENAI_API_KEY=sk-your-api-key-here
-OPENAI_MODEL=gpt-4-turbo-preview
+OPENAI_MODEL=gpt-3.5-turbo
 OPENAI_TEMPERATURE=0.1
 
 # File Processing

@@ -15,6 +15,7 @@ from app.exceptions.custom_exceptions import (
 from app.schemas.common import BaseResponse
 from app.schemas.parser import (
     ParseTextRequest,
+    ParseFreeTextRequest,
     ParseResponse,
     ParseStatusResponse
 )
@@ -60,6 +61,46 @@ async def parse_text(
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error in parse_text: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post(
+    "/parse-free-text",
+    response_model=dict,
+    summary="Parse CV from candidate's self-description",
+    description="Parse CV/resume from free-form text where candidate describes themselves"
+)
+async def parse_free_text(
+    request: ParseFreeTextRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Parse CV from candidate's self-description.
+    
+    Args:
+        request: Parse free text request with user_id, session_id, and free_text
+        db: Database session
+        
+    Returns:
+        Parsed CV data
+    """
+    try:
+        parser_service = get_parser_service()
+        result = await parser_service.parse_from_free_text(
+            session=db,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            free_text=request.free_text
+        )
+        return result
+        
+    except ValidationError as e:
+        logger.warning(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except ParserError as e:
+        logger.error(f"Parser error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error in parse_free_text: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

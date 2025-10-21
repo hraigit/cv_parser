@@ -17,6 +17,14 @@ class ParseTextRequest(BaseModel):
     text: str = Field(..., min_length=10, description="Text to parse")
 
 
+class ParseFreeTextRequest(BaseModel):
+    """Request model for parsing free-form text where candidate describes themselves."""
+    
+    user_id: str = Field(..., min_length=1, description="User identifier")
+    session_id: str = Field(..., min_length=1, description="Session identifier")
+    free_text: str = Field(..., min_length=20, description="Free-form text where candidate describes themselves")
+
+
 class ParseFileRequest(BaseModel):
     """Request model for parsing file input (form data)."""
     
