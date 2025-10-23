@@ -15,6 +15,7 @@ from app.exceptions.custom_exceptions import (
 from app.schemas.common import BaseResponse
 from app.schemas.parser import (
     ParseTextRequest,
+    ParseFreeTextRequest,
     ParseResponse,
     ParseStatusResponse
 )
@@ -64,10 +65,50 @@ async def parse_text(
 
 
 @router.post(
+    "/parse-free-text",
+    response_model=dict,
+    summary="Parse CV from candidate's self-description",
+    description="Parse CV/resume from free-form text where candidate describes themselves"
+)
+async def parse_free_text(
+    request: ParseFreeTextRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Parse CV from candidate's self-description.
+    
+    Args:
+        request: Parse free text request with user_id, session_id, and free_text
+        db: Database session
+        
+    Returns:
+        Parsed CV data
+    """
+    try:
+        parser_service = get_parser_service()
+        result = await parser_service.parse_from_free_text(
+            session=db,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            free_text=request.free_text
+        )
+        return result
+        
+    except ValidationError as e:
+        logger.warning(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except ParserError as e:
+        logger.error(f"Parser error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error in parse_free_text: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post(
     "/parse-file",
     response_model=dict,
     summary="Parse CV from file",
-    description="Parse CV/resume from uploaded file (PDF, DOCX, TXT, HTML)"
+    description="Parse CV/resume from uploaded file. Supported formats: PDF (.pdf), Word documents (.doc, .docx), HTML (.html, .htm), plain text (.txt), RTF (.rtf), CSV (.csv), XML (.xml)"
 )
 async def parse_file(
     user_id: str = Form(..., description="User identifier"),
@@ -193,22 +234,58 @@ async def get_history(
     "/supported-formats",
     response_model=dict,
     summary="Get supported formats",
-    description="Get list of supported file formats for CV parsing"
+    description="Get comprehensive list of supported file formats and MIME types for CV parsing. Includes PDF, Word, HTML, TXT, RTF, CSV, and XML formats."
 )
 async def get_supported_formats():
     """Get supported file formats.
     
     Returns:
-        List of supported MIME types
+        Comprehensive list of supported MIME types with descriptions
     """
     from app.services.file_service import get_file_service
     
     file_service = get_file_service()
     formats = file_service.get_supported_formats()
     
+    # Create a mapping of MIME types to human-readable descriptions
+    format_descriptions = {
+        "application/pdf": "PDF documents (.pdf)",
+        "text/plain": "Plain text files (.txt)",
+        "text/html": "HTML files (.html, .htm)",
+        "application/xhtml+xml": "XHTML files (.xhtml)",
+        "application/msword": "Legacy Word documents (.doc)",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "Modern Word documents (.docx)",
+        "text/rtf": "Rich Text Format (.rtf)",
+        "application/rtf": "Rich Text Format (.rtf)",
+        "text/csv": "Comma-separated values (.csv)",
+        "application/csv": "Comma-separated values (.csv)",
+        "text/tab-separated-values": "Tab-separated values (.tsv)",
+        "application/xml": "XML files (.xml)",
+        "text/xml": "XML files (.xml)",
+        "application/octet-stream": "Binary files (fallback for .txt)",
+        "text/plain; charset=utf-8": "UTF-8 encoded text",
+        "text/plain; charset=ascii": "ASCII encoded text",
+        "text/html; charset=utf-8": "UTF-8 encoded HTML",
+        "application/doc": "Document files (.doc)",
+        "application/vnd.ms-word": "Microsoft Word files",
+        "application/vnd.ms-word.document.macroEnabled.12": "Word documents with macros"
+    }
+    
+    # Group formats by category
+    categorized_formats = {
+        "pdf": [f for f in formats if "pdf" in f],
+        "word": [f for f in formats if any(x in f for x in ["msword", "word", "doc"])],
+        "text": [f for f in formats if f.startswith("text/")],
+        "html": [f for f in formats if "html" in f or "xml" in f],
+        "other": [f for f in formats if not any(x in f for x in ["pdf", "word", "doc", "text/", "html", "xml"])]
+    }
+    
     return {
         "supported_formats": formats,
-        "count": len(formats)
+        "count": len(formats),
+        "format_descriptions": {fmt: format_descriptions.get(fmt, fmt) for fmt in formats},
+        "categorized_formats": categorized_formats,
+        "common_extensions": [".pdf", ".doc", ".docx", ".txt", ".html", ".htm", ".rtf", ".csv", ".xml"]
     }
 
 

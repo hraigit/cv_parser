@@ -34,8 +34,8 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: str = Field(default="")
-    OPENAI_MODEL: str = Field(default="gpt-4-turbo-preview")
-    OPENAI_MAX_TOKENS: int = Field(default=4000)
+    OPENAI_MODEL: str = Field(default="gpt-3.5-turbo")
+    OPENAI_MAX_TOKENS: int = Field(default=3000)
     OPENAI_TEMPERATURE: float = Field(default=0.1)
 
     # File Processing
