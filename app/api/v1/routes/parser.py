@@ -108,12 +108,13 @@ async def parse_free_text(
     "/parse-file",
     response_model=dict,
     summary="Parse CV from file",
-    description="Parse CV/resume from uploaded file. Supported formats: PDF (.pdf), Word documents (.doc, .docx), HTML (.html, .htm), plain text (.txt), RTF (.rtf), CSV (.csv), XML (.xml)"
+    description="Parse CV/resume from uploaded file. Supported formats: PDF (.pdf), Word documents (.doc, .docx), HTML (.html, .htm), plain text (.txt), RTF (.rtf), CSV (.csv), XML (.xml). Parse modes: 'basic' for high-level summary (names, companies, titles only), 'advanced' for full detailed parsing (default)."
 )
 async def parse_file(
     user_id: str = Form(..., description="User identifier"),
     session_id: str = Form(..., description="Session identifier"),
     file: UploadFile = File(..., description="CV file to parse"),
+    parse_mode: str = Form("advanced", description="Parse mode: 'basic' for high-level info only (names, companies, titles), 'advanced' for full details (default)"),
     db: AsyncSession = Depends(get_db)
 ):
     """Parse CV from uploaded file.
@@ -122,18 +123,27 @@ async def parse_file(
         user_id: User identifier
         session_id: Session identifier
         file: Uploaded CV file
+        parse_mode: Parse mode - 'basic' or 'advanced' (default: 'advanced')
         db: Database session
         
     Returns:
         Parsed CV data
     """
     try:
+        # Validate parse_mode
+        if parse_mode not in ["basic", "advanced"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid parse_mode: {parse_mode}. Must be 'basic' or 'advanced'"
+            )
+        
         parser_service = get_parser_service()
         result = await parser_service.parse_from_file(
             session=db,
             user_id=user_id,
             session_id=session_id,
-            file=file
+            file=file,
+            parse_mode=parse_mode
         )
         return result
         

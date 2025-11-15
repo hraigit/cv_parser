@@ -52,8 +52,8 @@ class ParserService:
         
         try:
             logger.info(
-                f"Starting text parsing for user: {user_id}, "
-                f"session: {session_id}, text length: {len(text)}"
+                f"🚀 [TIMING] Starting text parsing for user: {user_id}, "
+                f"session: {session_id}, text length: {len(text)} characters"
             )
             
             # Validate input
@@ -61,7 +61,11 @@ class ParserService:
                 raise ValidationError("Text is too short to parse")
             
             # Parse with OpenAI
+            openai_start = time.time()
             parsed_result = await self.openai_service.parse_cv(text)
+            openai_time = time.time() - openai_start
+            
+            logger.info(f"⏱️ [TIMING] OpenAI parsing completed in {openai_time:.2f} seconds")
             
             # Extract metadata
             metadata = parsed_result.pop("_metadata", {})
@@ -73,6 +77,7 @@ class ParserService:
             processing_time = time.time() - start_time
             
             # Save to database
+            db_start = time.time()
             db_record = await self.repository.create(
                 session=session,
                 user_id=user_id,
@@ -85,10 +90,12 @@ class ParserService:
                 tokens_used=metadata.get("tokens_used"),
                 status="success"
             )
+            db_time = time.time() - db_start
             
             logger.info(
-                f"Successfully parsed text for user: {user_id}, "
-                f"session: {session_id}, record_id: {db_record.id}"
+                f"✅ [TIMING] Successfully parsed text for user: {user_id}, "
+                f"session: {session_id}, record_id: {db_record.id} | "
+                f"Total: {processing_time:.2f}s, OpenAI: {openai_time:.2f}s, DB: {db_time:.2f}s"
             )
             
             return {
@@ -154,8 +161,8 @@ class ParserService:
         
         try:
             logger.info(
-                f"Starting free text parsing for user: {user_id}, "
-                f"session: {session_id}, text length: {len(free_text)}"
+                f"🚀 [TIMING] Starting free text parsing for user: {user_id}, "
+                f"session: {session_id}, text length: {len(free_text)} characters"
             )
             
             # Validate input
@@ -168,7 +175,11 @@ class ParserService:
 {free_text}"""
             
             # Parse with OpenAI
+            openai_start = time.time()
             parsed_result = await self.openai_service.parse_cv(contextualized_text)
+            openai_time = time.time() - openai_start
+            
+            logger.info(f"⏱️ [TIMING] OpenAI parsing completed in {openai_time:.2f} seconds")
             
             # Extract metadata
             metadata = parsed_result.pop("_metadata", {})
@@ -180,6 +191,7 @@ class ParserService:
             processing_time = time.time() - start_time
             
             # Save to database with original free text
+            db_start = time.time()
             db_record = await self.repository.create(
                 session=session,
                 user_id=user_id,
@@ -192,10 +204,12 @@ class ParserService:
                 tokens_used=metadata.get("tokens_used"),
                 status="success"
             )
+            db_time = time.time() - db_start
             
             logger.info(
-                f"Successfully parsed free text for user: {user_id}, "
-                f"session: {session_id}, record_id: {db_record.id}"
+                f"✅ [TIMING] Successfully parsed free text for user: {user_id}, "
+                f"session: {session_id}, record_id: {db_record.id} | "
+                f"Total: {processing_time:.2f}s, OpenAI: {openai_time:.2f}s, DB: {db_time:.2f}s"
             )
             
             return {
@@ -241,7 +255,8 @@ class ParserService:
         session: AsyncSession,
         user_id: str,
         session_id: str,
-        file: UploadFile
+        file: UploadFile,
+        parse_mode: str = "advanced"
     ) -> Dict[str, Any]:
         """Parse CV from uploaded file.
         
@@ -250,6 +265,7 @@ class ParserService:
             user_id: User identifier
             session_id: Session identifier
             file: Uploaded file
+            parse_mode: Parsing mode - "basic" for high-level info only, "advanced" for full details
             
         Returns:
             Parsed CV data with metadata
@@ -261,20 +277,28 @@ class ParserService:
         
         try:
             logger.info(
-                f"Starting file parsing for user: {user_id}, "
-                f"session: {session_id}, file: {file.filename}"
+                f"🚀 [TIMING] Starting file parsing for user: {user_id}, "
+                f"session: {session_id}, file: {file.filename}, mode: {parse_mode}"
             )
             
             # Extract text from file
+            file_start = time.time()
             extraction_result = await self.file_service.extract_text_from_file(file)
             extracted_text = extraction_result["content"]
+            file_time = time.time() - file_start
+            
+            logger.info(f"📄 [TIMING] File extraction completed in {file_time:.2f} seconds")
             
             # Validate extracted text
             if not extracted_text or len(extracted_text.strip()) < 10:
                 raise ValidationError("Extracted text is too short to parse")
             
-            # Parse with OpenAI
-            parsed_result = await self.openai_service.parse_cv(extracted_text)
+            # Parse with OpenAI using specified mode
+            openai_start = time.time()
+            parsed_result = await self.openai_service.parse_cv(extracted_text, parse_mode=parse_mode)
+            openai_time = time.time() - openai_start
+            
+            logger.info(f"⏱️ [TIMING] OpenAI parsing completed in {openai_time:.2f} seconds")
             
             # Extract metadata
             metadata = parsed_result.pop("_metadata", {})
@@ -286,6 +310,7 @@ class ParserService:
             processing_time = time.time() - start_time
             
             # Save to database
+            db_start = time.time()
             db_record = await self.repository.create(
                 session=session,
                 user_id=user_id,
@@ -300,10 +325,13 @@ class ParserService:
                 tokens_used=metadata.get("tokens_used"),
                 status="success"
             )
+            db_time = time.time() - db_start
             
             logger.info(
-                f"Successfully parsed file for user: {user_id}, "
-                f"session: {session_id}, record_id: {db_record.id}"
+                f"✅ [TIMING] Successfully parsed file for user: {user_id}, "
+                f"session: {session_id}, record_id: {db_record.id}, mode: {parse_mode} | "
+                f"Total: {processing_time:.2f}s, File: {file_time:.2f}s, "
+                f"OpenAI: {openai_time:.2f}s, DB: {db_time:.2f}s"
             )
             
             return {
@@ -316,6 +344,7 @@ class ParserService:
                 "file_mime_type": extraction_result["mime_type"],
                 "processing_time_seconds": processing_time,
                 "tokens_used": metadata.get("tokens_used"),
+                "parse_mode": parse_mode,
                 "status": "success",
                 "created_at": db_record.created_at
             }
