@@ -11,22 +11,14 @@ from app.schemas.common import TimestampMixin
 
 # Request Schemas
 class ParseTextRequest(BaseModel):
-    """Request model for parsing text input."""
+    """Request model for parsing text input (supports both formatted CV and free-form text)."""
 
     user_id: str = Field(..., min_length=1, description="User identifier")
     session_id: str = Field(..., min_length=1, description="Session identifier")
-    text: str = Field(..., min_length=10, description="Text to parse")
-
-
-class ParseFreeTextRequest(BaseModel):
-    """Request model for parsing free-form text where candidate describes themselves."""
-
-    user_id: str = Field(..., min_length=1, description="User identifier")
-    session_id: str = Field(..., min_length=1, description="Session identifier")
-    free_text: str = Field(
+    text: str = Field(
         ...,
-        min_length=20,
-        description="Free-form text where candidate describes themselves",
+        min_length=10,
+        description="CV text to parse (formatted resume or free-form self-description)",
     )
 
 

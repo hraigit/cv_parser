@@ -26,7 +26,6 @@ from app.schemas.common import BaseResponse
 from app.schemas.parser import (
     AsyncJobResponse,
     JobStatusResponse,
-    ParseFreeTextRequest,
     ParseResponse,
     ParseStatusResponse,
     ParseTextRequest,
@@ -40,10 +39,14 @@ router = APIRouter(prefix="/parser", tags=["Parser"])
     "/parse-text",
     response_model=dict,
     summary="Parse CV from text",
-    description="Parse CV/resume from plain text input",
+    description="Parse CV/resume from plain text input (supports both formatted CV text and free-form self-descriptions)",
 )
 async def parse_text(request: ParseTextRequest, db: AsyncSession = Depends(get_db)):
     """Parse CV from text input.
+
+    Supports both:
+    - Formatted CV text (structured resume)
+    - Free-form self-descriptions (candidate writes about themselves)
 
     Args:
         request: Parse text request with user_id, session_id, and text
@@ -70,45 +73,6 @@ async def parse_text(request: ParseTextRequest, db: AsyncSession = Depends(get_d
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error in parse_text: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.post(
-    "/parse-free-text",
-    response_model=dict,
-    summary="Parse CV from candidate's self-description",
-    description="Parse CV/resume from free-form text where candidate describes themselves",
-)
-async def parse_free_text(
-    request: ParseFreeTextRequest, db: AsyncSession = Depends(get_db)
-):
-    """Parse CV from candidate's self-description.
-
-    Args:
-        request: Parse free text request with user_id, session_id, and free_text
-        db: Database session
-
-    Returns:
-        Parsed CV data
-    """
-    try:
-        parser_service = get_parser_service()
-        result = await parser_service.parse_from_free_text(
-            session=db,
-            user_id=request.user_id,
-            session_id=request.session_id,
-            free_text=request.free_text,
-        )
-        return result
-
-    except ValidationError as e:
-        logger.warning(f"Validation error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
-    except ParserError as e:
-        logger.error(f"Parser error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-    except Exception as e:
-        logger.error(f"Unexpected error in parse_free_text: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -439,7 +403,7 @@ async def parse_file_async(
     "/parse-text-async",
     response_model=AsyncJobResponse,
     summary="Parse CV from text (Async - Background Processing)",
-    description="Async endpoint: Returns job ID immediately and processes text in background.",
+    description="Async endpoint: Returns job ID immediately and processes text in background. Supports both formatted CV text and free-form self-descriptions.",
 )
 async def parse_text_async(
     request: ParseTextRequest,
@@ -447,6 +411,10 @@ async def parse_text_async(
     db: AsyncSession = Depends(get_db),
 ):
     """Parse CV from text asynchronously.
+
+    Supports both:
+    - Formatted CV text (structured resume)
+    - Free-form self-descriptions (candidate writes about themselves)
 
     Args:
         request: Parse text request
@@ -497,71 +465,6 @@ async def parse_text_async(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error in parse_text_async: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@router.post(
-    "/parse-free-text-async",
-    response_model=AsyncJobResponse,
-    summary="Parse CV from free text (Async - Background Processing)",
-    description="Async endpoint: Returns job ID immediately and processes free text in background.",
-)
-async def parse_free_text_async(
-    request: ParseFreeTextRequest,
-    background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
-):
-    """Parse CV from free text asynchronously.
-
-    Args:
-        request: Parse free text request
-        background_tasks: FastAPI background tasks
-        db: Database session
-
-    Returns:
-        Job information with job_id for tracking
-    """
-    try:
-        # Generate job ID
-        job_id = uuid4()
-
-        parser_service = get_parser_service()
-
-        # Create placeholder job
-        result = await parser_service.create_placeholder_job(
-            session=db,
-            job_id=job_id,
-            user_id=request.user_id,
-            session_id=request.session_id,
-        )
-
-        # Commit before background task
-        await db.commit()
-
-        # Add background task (reuse text processing)
-        background_tasks.add_task(
-            parser_service.process_text_background,
-            job_id=job_id,
-            user_id=request.user_id,
-            session_id=request.session_id,
-            text=request.free_text,
-        )
-
-        logger.info(
-            f"Created async free text parsing job: {job_id} for user: {request.user_id}"
-        )
-
-        return AsyncJobResponse(
-            job_id=job_id,
-            status="processing",
-            message=f"Job created successfully. Check status at /api/v1/parser/job/{job_id}",
-        )
-
-    except ValidationError as e:
-        logger.warning(f"Validation error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Unexpected error in parse_free_text_async: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

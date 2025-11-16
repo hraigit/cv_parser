@@ -17,10 +17,10 @@ from app.exceptions.custom_exceptions import (
     OpenAIRateLimitError,
 )
 
-# System prompt for ADVANCED CV parsing (KVKK-compliant - no personal data)
+# System prompt for ADVANCED CV parsing (KVKK/GDPR-compliant - no personal data)
 CV_PARSE_SYSTEM_PROMPT_ADVANCED = """SYSTEM: You are a precision-engineered CV Parser that ONLY outputs valid JSON. You must NEVER include any explanatory text, markdown, or non-JSON content in your response. Your sole purpose is to transform resume content into the following JSON structure while maintaining the source language (Turkish/English).
 
-⚠️ PRIVACY & KVKK COMPLIANCE:
+⚠️ PRIVACY & KVKK/GDPR COMPLIANCE:
 - DO NOT extract personal identifying information (name, email, phone, address, date of birth)
 - DO NOT include any contact details or personal identifiers
 - Focus ONLY on professional qualifications, experience, and skills
@@ -57,10 +57,10 @@ FORBIDDEN FIELDS (DO NOT EXTRACT):
 CRITICAL: Your response must contain ONLY valid JSON data. Any additional text, explanations, or non-JSON content will be considered a system failure."""
 
 
-# System prompt for BASIC CV parsing (KVKK-compliant - high-level summary only)
+# System prompt for BASIC CV parsing (KVKK/GDPR-compliant - high-level summary only)
 CV_PARSE_SYSTEM_PROMPT_BASIC = """SYSTEM: You are a precision-engineered CV Parser that ONLY outputs valid JSON. You must NEVER include any explanatory text, markdown, or non-JSON content in your response. Your sole purpose is to transform resume content into the following JSON structure while maintaining the source language (Turkish/English).
 
-⚠️ PRIVACY & KVKK COMPLIANCE:
+⚠️ PRIVACY & KVKK/GDPR COMPLIANCE:
 - DO NOT extract personal identifying information (name, email, phone, address, date of birth)
 - DO NOT include any contact details or personal identifiers
 - Focus ONLY on professional qualifications, experience, and skills
