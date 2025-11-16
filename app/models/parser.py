@@ -16,14 +16,15 @@ class ParsedCV(Base):
 
     __tablename__ = "parsed_cvs"
 
-    # Primary key
+    # Primary key - using candidate_id as both primary key and identifier
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+        UUID(as_uuid=True), primary_key=True, index=True
     )
 
-    # User and session info
-    user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    session_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    # Candidate identifier (replaces user_id and session_id)
+    candidate_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, unique=True, index=True
+    )
 
     # Input data
     input_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -59,13 +60,13 @@ class ParsedCV(Base):
 
     # Indexes for better query performance
     __table_args__ = (
-        Index("idx_user_session", "user_id", "session_id"),
+        Index("idx_candidate_id", "candidate_id"),
         Index("idx_created_at", "created_at"),
         Index("idx_status", "status"),
     )
 
     def __repr__(self) -> str:
         return (
-            f"<ParsedCV(id={self.id}, user_id={self.user_id}, "
-            f"session_id={self.session_id}, status={self.status})>"
+            f"<ParsedCV(id={self.id}, candidate_id={self.candidate_id}, "
+            f"status={self.status})>"
         )

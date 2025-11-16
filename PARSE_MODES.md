@@ -35,9 +35,8 @@ This project offers two different CV parsing modes.
 ### Usage Example:
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
-  -F "user_id=user123" \
-  -F "session_id=session456" \
+curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
+  -F "candidate_id=550e8400-e29b-41d4-a716-446655440000" \
   -F "file=@cv.pdf" \
   -F "parse_mode=basic"
 ```
@@ -66,16 +65,14 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
 
 ```bash
 # Advanced mode (default)
-curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
-  -F "user_id=user123" \
-  -F "session_id=session456" \
+curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
+  -F "candidate_id=550e8400-e29b-41d4-a716-446655440000" \
   -F "file=@cv.pdf" \
   -F "parse_mode=advanced"
 
 # Or without specifying parse_mode (defaults to advanced)
-curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
-  -F "user_id=user123" \
-  -F "session_id=session456" \
+curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
+  -F "candidate_id=550e8400-e29b-41d4-a716-446655440000" \
   -F "file=@cv.pdf"
 ```
 
@@ -194,9 +191,9 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
    - `CV_PARSE_SYSTEM_PROMPT_BASIC`: For basic mode
    - `CV_PARSE_SYSTEM_PROMPT_ADVANCED`: For advanced mode
 
-2. **parser_service.py**: `parse_mode` parameter added to `parse_from_file()` method
+2. **parser_service.py**: `parse_mode` parameter added to background processing methods
 
-3. **parser.py (routes)**: `parse_mode` Form parameter added to `/parse-file` endpoint
+3. **parser.py (routes)**: `parse_mode` Form parameter added to async endpoints (`/parse-file-async`, `/parse-text-async`)
 
 ### Backward Compatibility:
 

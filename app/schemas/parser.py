@@ -13,8 +13,7 @@ from app.schemas.common import TimestampMixin
 class ParseTextRequest(BaseModel):
     """Request model for parsing text input (supports both formatted CV and free-form text)."""
 
-    user_id: str = Field(..., min_length=1, description="User identifier")
-    session_id: str = Field(..., min_length=1, description="Session identifier")
+    candidate_id: UUID = Field(..., description="Candidate identifier (used as job ID)")
     text: str = Field(
         ...,
         min_length=10,
@@ -25,8 +24,7 @@ class ParseTextRequest(BaseModel):
 class ParseFileRequest(BaseModel):
     """Request model for parsing file input (form data)."""
 
-    user_id: str = Field(..., min_length=1, description="User identifier")
-    session_id: str = Field(..., min_length=1, description="Session identifier")
+    candidate_id: UUID = Field(..., description="Candidate identifier (used as job ID)")
 
 
 # CV Structure Schemas (KVKK-compliant - no personal data)
@@ -278,8 +276,7 @@ class ParseResponse(TimestampMixin):
     """Response model for parse operations."""
 
     id: UUID = Field(..., description="Parse result ID")
-    user_id: str = Field(..., description="User identifier")
-    session_id: str = Field(..., description="Session identifier")
+    candidate_id: UUID = Field(..., description="Candidate identifier")
     parsed_data: ParsedCVData = Field(..., description="Parsed CV data")
     cv_language: Optional[str] = Field(None, description="Detected CV language")
     file_name: Optional[str] = Field(None, description="Original file name")
@@ -308,8 +305,7 @@ class ParseStatusResponse(BaseModel):
 
     id: UUID
     status: str
-    user_id: str
-    session_id: str
+    candidate_id: UUID
     created_at: datetime
     error_message: Optional[str] = None
 
@@ -320,7 +316,9 @@ class ParseStatusResponse(BaseModel):
 class AsyncJobResponse(BaseModel):
     """Response model for async job creation."""
 
-    job_id: UUID = Field(..., description="Job identifier for tracking")
+    candidate_id: UUID = Field(
+        ..., description="Candidate identifier (used as job ID for tracking)"
+    )
     status: str = Field(default="processing", description="Initial job status")
     message: str = Field(
         default="Job created and processing in background", description="Status message"
@@ -335,12 +333,10 @@ class AsyncJobResponse(BaseModel):
 class JobStatusResponse(BaseModel):
     """Response model for job status polling."""
 
-    job_id: UUID = Field(..., description="Job identifier")
+    candidate_id: UUID = Field(..., description="Candidate identifier (same as job ID)")
     status: str = Field(
         ..., description="Current job status: processing, success, failed"
     )
-    user_id: str = Field(..., description="User identifier")
-    session_id: str = Field(..., description="Session identifier")
     file_name: Optional[str] = Field(None, description="File name if applicable")
     cv_language: Optional[str] = Field(None, description="Detected CV language")
     processing_time_seconds: Optional[float] = Field(

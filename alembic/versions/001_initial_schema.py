@@ -26,12 +26,12 @@ def upgrade() -> None:
     op.create_table(
         "parsed_cvs",
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("user_id", sa.String(length=255), nullable=False),
-        sa.Column("session_id", sa.String(length=255), nullable=False),
+        sa.Column("candidate_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("input_text", sa.Text(), nullable=True),
         sa.Column("file_name", sa.String(length=500), nullable=True),
         sa.Column("file_mime_type", sa.String(length=100), nullable=True),
         sa.Column("stored_file_path", sa.String(length=1000), nullable=True),
+        sa.Column("_type", sa.String(length=50), nullable=True),
         sa.Column(
             "parsed_data", postgresql.JSONB(astext_type=sa.Text()), nullable=False
         ),
@@ -47,26 +47,16 @@ def upgrade() -> None:
     )
 
     # Create indexes
+    op.create_index("idx_candidate_id", "parsed_cvs", ["candidate_id"], unique=True)
     op.create_index("idx_created_at", "parsed_cvs", ["created_at"], unique=False)
     op.create_index("idx_status", "parsed_cvs", ["status"], unique=False)
-    op.create_index(
-        "idx_user_session", "parsed_cvs", ["user_id", "session_id"], unique=False
-    )
     op.create_index(op.f("ix_parsed_cvs_id"), "parsed_cvs", ["id"], unique=False)
-    op.create_index(
-        op.f("ix_parsed_cvs_session_id"), "parsed_cvs", ["session_id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_parsed_cvs_user_id"), "parsed_cvs", ["user_id"], unique=False
-    )
 
 
 def downgrade() -> None:
     """Drop all tables."""
-    op.drop_index(op.f("ix_parsed_cvs_user_id"), table_name="parsed_cvs")
-    op.drop_index(op.f("ix_parsed_cvs_session_id"), table_name="parsed_cvs")
     op.drop_index(op.f("ix_parsed_cvs_id"), table_name="parsed_cvs")
-    op.drop_index("idx_user_session", table_name="parsed_cvs")
     op.drop_index("idx_status", table_name="parsed_cvs")
     op.drop_index("idx_created_at", table_name="parsed_cvs")
+    op.drop_index("idx_candidate_id", table_name="parsed_cvs")
     op.drop_table("parsed_cvs")

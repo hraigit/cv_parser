@@ -46,6 +46,7 @@ OUTPUT SCHEMA:
 
 FIELD NOTES:
 - has_driving_license: Use "yes" if CV clearly states they have a driving license, "no" if CV explicitly states they don't have one, "not_specified" if CV doesn't mention driving license at all
+- cv_language: Use ISO 639-1 two-letter codes in UPPERCASE (e.g., "EN" for English, "TR" for Turkish, "DE" for German, "FR" for French)
 
 PROCESSING REQUIREMENTS:
 - Extract all PROFESSIONAL information from the input CV
@@ -90,6 +91,7 @@ OUTPUT SCHEMA:
 
 FIELD NOTES:
 - has_driving_license: Use "yes" if CV clearly states they have a driving license, "no" if CV explicitly states they don't have one, "not_specified" if CV doesn't mention driving license at all
+- cv_language: Use ISO 639-1 two-letter codes in UPPERCASE (e.g., "EN" for English, "TR" for Turkish, "DE" for German, "FR" for French)
 
 BASIC PARSING MODE - PROCESSING REQUIREMENTS:
 - Extract ONLY high-level, essential PROFESSIONAL information

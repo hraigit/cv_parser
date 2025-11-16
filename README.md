@@ -8,65 +8,44 @@ Production-ready CV/Resume Parser API powered by FastAPI, OpenAI (GPT-5-mini for
 
 ```mermaid
 flowchart TD
-    A[📄 Text CV] -->|POST /parse-text-async| C[job_id]
-    B[📎 File CV<br/>PDF/DOCX/Image] -->|POST /parse-file-async| C
+    A[📄 Text CV] -->|POST /parse-text-async<br/>candidate_id| C[candidate_id]
+    B[📎 File CV<br/>PDF/DOCX/Image] -->|POST /parse-file-async<br/>candidate_id| C
     
-    C -->|Yol 1: Job ile takip| D[GET /job/job_id]
+    C -->|Status kontrolü| D[GET /status/candidate_id]
     D --> E{Status?}
     E -->|processing| D
-    E -->|success| F[GET /result/job_id]
+    E -->|success| F[GET /result/candidate_id]
     E -->|failed| G[❌ Error]
-    
-    C -->|Yol 2: Direkt son CV| H[GET /latest/user_id]
-    H --> I[✅ En güncel CV<br/>created_at DESC]
-    
-    J[👤 User] -->|Tüm geçmiş| K[GET /history/user_id]
-    K --> L[📋 Paginated Liste]
     
     style A fill:#e3f2fd
     style B fill:#e3f2fd
     style C fill:#fff3e0
     style F fill:#e8f5e9
     style G fill:#ffebee
-    style H fill:#f3e5f5
-    style I fill:#e8f5e9
-    style L fill:#f3e5f5
 ```
 
 ### 📤 CV Gönderme (Upload)
 
 ```bash
-# Text olarak gönder
+# Text olarak gönder (candidate_id ile)
 POST /api/v1/parser/parse-text-async
-→ job_id döner
+→ candidate_id döner
 
 # Dosya olarak gönder (PDF/DOCX/Image)
 POST /api/v1/parser/parse-file-async
-→ job_id döner
+→ candidate_id döner
 ```
 
 ### 🔍 Sonuç Alma (Retrieve)
 
 ```bash
 # 1️⃣ Job durumunu kontrol et
-GET /api/v1/parser/job/{job_id}
+GET /api/v1/parser/status/{candidate_id}
 → status: processing/success/failed
 
 # 2️⃣ Başarılıysa sonucu al
-GET /api/v1/parser/result/{job_id}
+GET /api/v1/parser/result/{candidate_id}
 → Parsed CV verisi (JSON)
-
-# 3️⃣ Veya user'ın EN GÜNCEL CV'sini direkt al
-GET /api/v1/parser/latest/{user_id}
-→ En son parse edilen CV (created_at DESC)
-```
-
-### 📋 Geçmiş (History)
-
-```bash
-# User'ın tüm CV'lerini listele
-GET /api/v1/parser/history/{user_id}?page=1&page_size=10
-→ Paginated liste
 ```
 
 ---
@@ -76,40 +55,30 @@ GET /api/v1/parser/history/{user_id}?page=1&page_size=10
 **1️⃣ Parse Text CV (Async)**
 ```bash
 curl -X POST "http://localhost:8000/api/v1/parser/parse-text-async" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": "user123", "session_id": "session456", "text": "..."}'
-# → {"job_id": "550e8400-...", "status": "processing"}
+  -F "candidate_id=550e8400-e29b-41d4-a716-446655440000" \
+  -F "text=Software Engineer with 5 years experience..."
+# → {"candidate_id": "550e8400-...", "status": "processing"}
 ```
 
 **2️⃣ Parse File CV (Async)**
 ```bash
 curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
-  -F "user_id=user123" -F "session_id=session456" -F "file=@cv.pdf"
-# → {"job_id": "550e8400-...", "status": "processing"}
+  -F "candidate_id=550e8400-e29b-41d4-a716-446655440000" \
+  -F "file=@cv.pdf" \
+  -F "parse_mode=advanced"
+# → {"candidate_id": "550e8400-...", "status": "processing"}
 ```
 
 **3️⃣ Check Status**
 ```bash
-curl "http://localhost:8000/api/v1/parser/job/550e8400-..."
-# → {"status": "success", "processing_time_seconds": 3.2}
+curl "http://localhost:8000/api/v1/parser/status/550e8400-..."
+# → {"candidate_id": "550e8400-...", "status": "success", "processing_time_seconds": 3.2}
 ```
 
 **4️⃣ Get Result**
 ```bash
 curl "http://localhost:8000/api/v1/parser/result/550e8400-..."
 # → Full parsed CV data (JSON)
-```
-
-**5️⃣ Get User History**
-```bash
-curl "http://localhost:8000/api/v1/parser/history/user123?page=1&page_size=10"
-# → List of all parsed CVs for this user
-```
-
-**6️⃣ Get Latest CV**
-```bash
-curl "http://localhost:8000/api/v1/parser/latest/user123"
-# → Most recent parsed CV for this user
 ```
 
 ---
@@ -154,49 +123,26 @@ python run.py
 
 ## 🎯 API Endpoints
 
-### Synchronous Parsing (Immediate Response)
-
-**Parse from Text:**
-```bash
-curl -X POST "http://localhost:8000/api/v1/parser/parse-text" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "user123",
-    "session_id": "session456",
-    "text": "Software Engineer with 5 years experience in Python..."
-  }'
-```
-
-**Parse from File:**
-```bash
-curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
-  -F "user_id=user123" \
-  -F "session_id=session456" \
-  -F "parse_mode=advanced" \
-  -F "file=@cv.pdf"
-```
-
 ### Asynchronous Parsing (Background Processing)
 
 **1. Start Async Job:**
 ```bash
 curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
-  -F "user_id=user123" \
-  -F "session_id=session456" \
+  -F "candidate_id=550e8400-e29b-41d4-a716-446655440000" \
   -F "parse_mode=advanced" \
   -F "file=@cv.pdf"
 
-# Response: {"job_id": "550e8400-...", "status": "processing"}
+# Response: {"candidate_id": "550e8400-...", "status": "processing"}
 ```
 
 **2. Check Job Status:**
 ```bash
-curl "http://localhost:8000/api/v1/parser/job/{job_id}"
+curl "http://localhost:8000/api/v1/parser/status/{candidate_id}"
 ```
 
 **3. Get Final Result:**
 ```bash
-curl "http://localhost:8000/api/v1/parser/result/{job_id}"
+curl "http://localhost:8000/api/v1/parser/result/{candidate_id}"
 ```
 
 ### Utility Endpoints
@@ -204,7 +150,6 @@ curl "http://localhost:8000/api/v1/parser/result/{job_id}"
 - `GET /api/v1/health` - Health check
 - `GET /api/v1/parser/supported-formats` - Supported file types (PDF, DOCX, TXT, HTML, RTF, CSV, XML)
 - `GET /api/v1/parser/cache-stats` - Cache statistics
-- `GET /api/v1/parser/history/{user_id}?page=1&page_size=10` - User parsing history
 
 ## 🤖 Model Strategy
 
@@ -244,7 +189,7 @@ Only professional data is extracted:
 Uploaded files are automatically stored with unique timestamp-based naming:
 
 ```
-Format: {name}_{YYYYMMDD_HHMMSS}_{job_id}.{ext}
+Format: {name}_{YYYYMMDD_HHMMSS}_{candidate_id}.{ext}
 Example: resume_20251116_143022_550e8400.pdf
 Location: /tmp/cv_parser (configurable via FILE_STORAGE_PATH)
 ```
@@ -256,8 +201,7 @@ File paths are stored in the database (`stored_file_path` field).
 ```sql
 CREATE TABLE parsed_cvs (
     id UUID PRIMARY KEY,
-    user_id VARCHAR(255) NOT NULL,
-    session_id VARCHAR(255) NOT NULL,
+    candidate_id UUID NOT NULL UNIQUE,
     input_text TEXT,
     file_name VARCHAR(500),
     file_mime_type VARCHAR(100),

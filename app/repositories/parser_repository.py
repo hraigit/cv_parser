@@ -17,8 +17,7 @@ class ParserRepository:
     async def create(
         self,
         session: AsyncSession,
-        user_id: str,
-        session_id: str,
+        candidate_id: UUID,
         parsed_data: dict,
         input_text: Optional[str] = None,
         file_name: Optional[str] = None,
@@ -37,8 +36,7 @@ class ParserRepository:
 
         Args:
             session: Database session
-            user_id: User identifier
-            session_id: Session identifier
+            candidate_id: Candidate identifier (used as both record ID and identifier)
             parsed_data: Parsed CV data as dictionary
             input_text: Original input text
             file_name: Original filename
@@ -61,9 +59,9 @@ class ParserRepository:
         """
         try:
             parsed_cv = ParsedCV(
-                id=record_id,  # Will use auto-generated if None
-                user_id=user_id,
-                session_id=session_id,
+                id=record_id
+                or candidate_id,  # Use candidate_id as id if record_id not provided
+                candidate_id=candidate_id,
                 parsed_data=parsed_data,
                 input_text=input_text,
                 file_name=file_name,
@@ -84,7 +82,7 @@ class ParserRepository:
 
             logger.info(
                 f"Created parsed CV record: {parsed_cv.id} "
-                f"for user: {user_id}, session: {session_id}"
+                f"for candidate: {candidate_id}"
             )
 
             return parsed_cv
@@ -116,108 +114,30 @@ class ParserRepository:
             logger.error(f"Failed to get parsed CV by ID {record_id}: {str(e)}")
             raise DatabaseError(f"Failed to retrieve parsed CV: {str(e)}") from e
 
-    async def get_by_user_and_session(
-        self,
-        session: AsyncSession,
-        user_id: str,
-        session_id: str,
-        limit: int = 10,
-        offset: int = 0,
-    ) -> List[ParsedCV]:
-        """Get parsed CVs by user and session.
+    async def get_by_candidate_id(
+        self, session: AsyncSession, candidate_id: UUID
+    ) -> Optional[ParsedCV]:
+        """Get parsed CV by candidate ID.
 
         Args:
             session: Database session
-            user_id: User identifier
-            session_id: Session identifier
-            limit: Maximum results
-            offset: Results offset
+            candidate_id: Candidate UUID
 
         Returns:
-            List of ParsedCV instances
+            ParsedCV instance or None
 
         Raises:
             DatabaseError: If query fails
         """
         try:
-            stmt = (
-                select(ParsedCV)
-                .where(
-                    and_(ParsedCV.user_id == user_id, ParsedCV.session_id == session_id)
-                )
-                .order_by(ParsedCV.created_at.desc())
-                .limit(limit)
-                .offset(offset)
-            )
-
+            stmt = select(ParsedCV).where(ParsedCV.candidate_id == candidate_id)
             result = await session.execute(stmt)
-            return list(result.scalars().all())
-
+            return result.scalar_one_or_none()
         except Exception as e:
             logger.error(
-                f"Failed to get parsed CVs for user {user_id}, "
-                f"session {session_id}: {str(e)}"
+                f"Failed to get parsed CV by candidate_id {candidate_id}: {str(e)}"
             )
-            raise DatabaseError(f"Failed to retrieve parsed CVs: {str(e)}") from e
-
-    async def get_by_user(
-        self, session: AsyncSession, user_id: str, limit: int = 10, offset: int = 0
-    ) -> List[ParsedCV]:
-        """Get all parsed CVs for a user.
-
-        Args:
-            session: Database session
-            user_id: User identifier
-            limit: Maximum results
-            offset: Results offset
-
-        Returns:
-            List of ParsedCV instances
-        """
-        try:
-            stmt = (
-                select(ParsedCV)
-                .where(ParsedCV.user_id == user_id)
-                .order_by(ParsedCV.created_at.desc())
-                .limit(limit)
-                .offset(offset)
-            )
-
-            result = await session.execute(stmt)
-            return list(result.scalars().all())
-
-        except Exception as e:
-            logger.error(f"Failed to get parsed CVs for user {user_id}: {str(e)}")
-            raise DatabaseError(f"Failed to retrieve parsed CVs: {str(e)}") from e
-
-    async def count_by_user_and_session(
-        self, session: AsyncSession, user_id: str, session_id: str
-    ) -> int:
-        """Count parsed CVs by user and session.
-
-        Args:
-            session: Database session
-            user_id: User identifier
-            session_id: Session identifier
-
-        Returns:
-            Count of records
-        """
-        try:
-            stmt = (
-                select(func.count())
-                .select_from(ParsedCV)
-                .where(
-                    and_(ParsedCV.user_id == user_id, ParsedCV.session_id == session_id)
-                )
-            )
-
-            result = await session.execute(stmt)
-            return result.scalar_one()
-
-        except Exception as e:
-            logger.error(f"Failed to count parsed CVs: {str(e)}")
-            raise DatabaseError(f"Failed to count parsed CVs: {str(e)}") from e
+            raise DatabaseError(f"Failed to retrieve parsed CV: {str(e)}") from e
 
     async def update_status(
         self,

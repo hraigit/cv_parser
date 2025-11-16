@@ -1,7 +1,7 @@
 """Parser API routes."""
 
 from typing import Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import (
     APIRouter,
@@ -25,16 +25,16 @@ router = APIRouter(prefix="/parser", tags=["Parser"])
 
 
 @router.get(
-    "/result/{job_id}",
+    "/result/{candidate_id}",
     response_model=dict,
-    summary="Get parse result by job ID",
-    description="Retrieve parsed CV result by job ID (same as record ID)",
+    summary="Get parse result by candidate ID",
+    description="Retrieve parsed CV result by candidate ID",
 )
-async def get_result(job_id: UUID, db: AsyncSession = Depends(get_db)):
-    """Get parse result by job ID.
+async def get_result(candidate_id: UUID, db: AsyncSession = Depends(get_db)):
+    """Get parse result by candidate ID.
 
     Args:
-        job_id: Job/Record UUID
+        candidate_id: Candidate UUID
         db: Database session
 
     Returns:
@@ -42,11 +42,13 @@ async def get_result(job_id: UUID, db: AsyncSession = Depends(get_db)):
     """
     try:
         parser_service = get_parser_service()
-        result = await parser_service.get_parse_result(session=db, record_id=job_id)
+        result = await parser_service.get_parse_result(
+            session=db, record_id=candidate_id
+        )
 
         if not result:
             raise HTTPException(
-                status_code=404, detail=f"Parse result not found: {job_id}"
+                status_code=404, detail=f"Parse result not found: {candidate_id}"
             )
 
         return result
@@ -55,90 +57,6 @@ async def get_result(job_id: UUID, db: AsyncSession = Depends(get_db)):
         raise
     except Exception as e:
         logger.error(f"Error getting parse result: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error") from e
-
-
-@router.get(
-    "/latest/{user_id}",
-    response_model=dict,
-    summary="Get latest CV for user",
-    description="Retrieve the most recently parsed CV for a user (sorted by created_at DESC)",
-)
-async def get_latest_cv(
-    user_id: str,
-    session_id: Optional[str] = Query(None, description="Optional session filter"),
-    db: AsyncSession = Depends(get_db),
-):
-    """Get latest parsed CV for a user.
-
-    Args:
-        user_id: User identifier
-        session_id: Optional session identifier filter
-        db: Database session
-
-    Returns:
-        Latest parsed CV data
-    """
-    try:
-        parser_service = get_parser_service()
-        result = await parser_service.get_latest_cv(
-            session=db, user_id=user_id, session_id=session_id
-        )
-
-        if not result:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No CV found for user: {user_id}"
-                + (f", session: {session_id}" if session_id else ""),
-            )
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting latest CV: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error") from e
-
-
-@router.get(
-    "/history/{user_id}",
-    response_model=dict,
-    summary="Get user parse history",
-    description="Retrieve parsing history for a user with optional session filter",
-)
-async def get_history(
-    user_id: str,
-    session_id: Optional[str] = Query(None, description="Optional session filter"),
-    page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
-    db: AsyncSession = Depends(get_db),
-):
-    """Get user parsing history.
-
-    Args:
-        user_id: User identifier
-        session_id: Optional session identifier filter
-        page: Page number
-        page_size: Items per page
-        db: Database session
-
-    Returns:
-        Paginated history
-    """
-    try:
-        parser_service = get_parser_service()
-        result = await parser_service.get_user_history(
-            session=db,
-            user_id=user_id,
-            session_id=session_id,
-            page=page,
-            page_size=page_size,
-        )
-        return result
-
-    except Exception as e:
-        logger.error(f"Error getting user history: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
@@ -247,33 +165,31 @@ async def get_cache_stats():
     response_model=AsyncJobResponse,
     summary="Parse CV from file (Async - Background Processing)",
     description=(
-        "Async endpoint: Returns job ID immediately and processes file in background. "
-        "Use /job/{job_id} to check status and /result/{job_id} to get final result."
+        "Async endpoint: Returns candidate ID immediately and processes file in background. "
+        "Use /status/{candidate_id} to check status and /result/{candidate_id} to get final result."
     ),
 )
 async def parse_file_async(
     background_tasks: BackgroundTasks,
-    user_id: str = Form(..., description="User identifier"),
-    session_id: str = Form(..., description="Session identifier"),
+    candidate_id: UUID = Form(..., description="Candidate identifier (used as job ID)"),
     file: UploadFile = File(..., description="CV file to parse"),
     parse_mode: str = Form("advanced", description="Parse mode: 'basic' or 'advanced'"),
     db: AsyncSession = Depends(get_db),
 ):
     """Parse CV from file asynchronously.
 
-    Returns job ID immediately and processes in background.
-    Check status with GET /job/{job_id}.
+    Returns candidate ID immediately and processes in background.
+    Check status with GET /status/{candidate_id}.
 
     Args:
         background_tasks: FastAPI background tasks
-        user_id: User identifier
-        session_id: Session identifier
+        candidate_id: Candidate identifier (used as job ID)
         file: Uploaded CV file
         parse_mode: Parse mode (basic/advanced)
         db: Database session
 
     Returns:
-        Job information with job_id for tracking
+        Job information with candidate_id for tracking
     """
     try:
         # Validate parse_mode
@@ -282,9 +198,6 @@ async def parse_file_async(
                 status_code=400,
                 detail=f"Invalid parse_mode: {parse_mode}. Must be 'basic' or 'advanced'",
             )
-
-        # Generate job ID
-        job_id = uuid4()
 
         # Read file content (need to do this before background task)
         file_content = await file.read()
@@ -296,9 +209,7 @@ async def parse_file_async(
         # Create placeholder job in DB
         await parser_service.create_placeholder_job(
             session=db,
-            job_id=job_id,
-            user_id=user_id,
-            session_id=session_id,
+            candidate_id=candidate_id,
             file_name=file_name,
             _type=file_content_type,
         )
@@ -309,9 +220,7 @@ async def parse_file_async(
         # Add background task
         background_tasks.add_task(
             parser_service.process_file_background,
-            job_id=job_id,
-            user_id=user_id,
-            session_id=session_id,
+            candidate_id=candidate_id,
             file_content=file_content,
             file_name=file_name,
             file_content_type=file_content_type,
@@ -319,14 +228,14 @@ async def parse_file_async(
         )
 
         logger.info(
-            f"Created async file parsing job: {job_id} for user: {user_id}, "
+            f"Created async file parsing job for candidate: {candidate_id}, "
             f"file: {file_name}, mode: {parse_mode}"
         )
 
         return AsyncJobResponse(
-            job_id=job_id,
+            candidate_id=candidate_id,
             status="processing",
-            message=f"Job created successfully. Check status at /api/v1/parser/job/{job_id}",
+            message=f"Job created successfully. Check status at /api/v1/parser/status/{candidate_id}",
         )
 
     except ValidationError as e:
@@ -342,15 +251,14 @@ async def parse_file_async(
     response_model=AsyncJobResponse,
     summary="Parse CV from text (Async - Background Processing)",
     description=(
-        "Async endpoint: Returns job ID immediately and processes text in background. "
+        "Async endpoint: Returns candidate ID immediately and processes text in background. "
         "Supports both formatted CV text and free-form self-descriptions. "
         "Parse modes: 'basic' for high-level summary, 'advanced' for full detailed parsing (default)."
     ),
 )
 async def parse_text_async(
     background_tasks: BackgroundTasks,
-    user_id: str = Form(..., description="User identifier"),
-    session_id: str = Form(..., description="Session identifier"),
+    candidate_id: UUID = Form(..., description="Candidate identifier (used as job ID)"),
     text: str = Form(..., description="CV text content (formatted or free-form)"),
     parse_mode: str = Form("advanced", description="Parse mode: 'basic' or 'advanced'"),
     db: AsyncSession = Depends(get_db),
@@ -363,14 +271,13 @@ async def parse_text_async(
 
     Args:
         background_tasks: FastAPI background tasks
-        user_id: User identifier
-        session_id: Session identifier
+        candidate_id: Candidate identifier (used as job ID)
         text: CV text content
         parse_mode: Parse mode (basic/advanced)
         db: Database session
 
     Returns:
-        Job information with job_id for tracking
+        Job information with candidate_id for tracking
     """
     try:
         # Validate parse_mode
@@ -380,17 +287,12 @@ async def parse_text_async(
                 detail=f"Invalid parse_mode: {parse_mode}. Must be 'basic' or 'advanced'",
             )
 
-        # Generate job ID
-        job_id = uuid4()
-
         parser_service = get_parser_service()
 
         # Create placeholder job
         await parser_service.create_placeholder_job(
             session=db,
-            job_id=job_id,
-            user_id=user_id,
-            session_id=session_id,
+            candidate_id=candidate_id,
             _type="free_text",
         )
 
@@ -400,21 +302,19 @@ async def parse_text_async(
         # Add background task
         background_tasks.add_task(
             parser_service.process_text_background,
-            job_id=job_id,
-            user_id=user_id,
-            session_id=session_id,
+            candidate_id=candidate_id,
             text=text,
             parse_mode=parse_mode,
         )
 
         logger.info(
-            f"Created async text parsing job: {job_id} for user: {user_id}, mode: {parse_mode}"
+            f"Created async text parsing job for candidate: {candidate_id}, mode: {parse_mode}"
         )
 
         return AsyncJobResponse(
-            job_id=job_id,
+            candidate_id=candidate_id,
             status="processing",
-            message=f"Job created successfully. Check status at /api/v1/parser/job/{job_id}",
+            message=f"Job created successfully. Check status at /api/v1/parser/status/{candidate_id}",
         )
 
     except ValidationError as e:
@@ -426,16 +326,16 @@ async def parse_text_async(
 
 
 @router.get(
-    "/job/{job_id}",
+    "/status/{candidate_id}",
     response_model=JobStatusResponse,
-    summary="Get job status",
+    summary="Get job status by candidate ID",
     description="Check the status of an async parsing job. Returns 'processing', 'success', or 'failed'.",
 )
-async def get_job_status(job_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_job_status(candidate_id: UUID, db: AsyncSession = Depends(get_db)):
     """Get status of async parsing job.
 
     Args:
-        job_id: Job UUID
+        candidate_id: Candidate UUID
         db: Database session
 
     Returns:
@@ -443,16 +343,18 @@ async def get_job_status(job_id: UUID, db: AsyncSession = Depends(get_db)):
     """
     try:
         parser_service = get_parser_service()
-        record = await parser_service.get_parse_result(session=db, record_id=job_id)
+        record = await parser_service.get_parse_result(
+            session=db, record_id=candidate_id
+        )
 
         if not record:
-            raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+            raise HTTPException(
+                status_code=404, detail=f"Job not found: {candidate_id}"
+            )
 
         return JobStatusResponse(
-            job_id=record["id"],
+            candidate_id=record["candidate_id"],
             status=record["status"],
-            user_id=record["user_id"],
-            session_id=record["session_id"],
             file_name=record.get("file_name"),
             cv_language=record.get("cv_language"),
             processing_time_seconds=record.get("processing_time_seconds"),
