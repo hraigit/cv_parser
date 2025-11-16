@@ -4,6 +4,10 @@
 
 Yoğun trafik için async background processing endpoint'leri eklendi. Bu endpoint'ler job ID döndürür ve processing'i background'da yapar.
 
+**⚠️ KVKK/GDPR Uyumluluğu:** Tüm endpoint'ler sadece profesyonel bilgileri parse eder. Kişisel bilgiler (isim, soyisim, telefon, e-posta, adres, doğum tarihi, referanslar) parse edilmez.
+
+**📁 File Storage:** Parse edilen dosyalar otomatik olarak timestamp-bazlı unique isimle saklanır (`/tmp/cv_parser/{name}_{YYYYMMDD_HHMMSS}_{jobid}.{ext}`)
+
 ## 🎯 Kullanım Akışı
 
 ```
@@ -16,7 +20,7 @@ Client → GET /job/{job_id} → Status kontrol et (polling)
 Client → GET /result/{job_id} → Final result al
 ```
 
-## 🔄 Endpoint'ler
+## 🔄 Endpoint'ler (4 Async Endpoint)
 
 ### 1. Async File Parsing
 
@@ -47,6 +51,10 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
 
 **POST** `/api/v1/parser/parse-text-async`
 
+**Notlar:**
+- Hem formatted CV metni hem de free-form text kabul eder
+- `parse-free-text-async` endpoint'i kaldırıldı, bu endpoint her ikisini de handle eder
+
 **Request:**
 ```bash
 curl -X POST "http://localhost:8000/api/v1/parser/parse-text-async" \
@@ -69,24 +77,7 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-text-async" \
 
 ---
 
-### 3. Async Free Text Parsing
-
-**POST** `/api/v1/parser/parse-free-text-async`
-
-**Request:**
-```bash
-curl -X POST "http://localhost:8000/api/v1/parser/parse-free-text-async" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "user123",
-    "session_id": "session456",
-    "free_text": "I am a software engineer with 5 years experience..."
-  }'
-```
-
----
-
-### 4. Job Status Check (Polling)
+### 3. Job Status Check (Polling)
 
 **GET** `/api/v1/parser/job/{job_id}`
 
@@ -145,11 +136,11 @@ curl -X GET "http://localhost:8000/api/v1/parser/job/550e8400-e29b-41d4-a716-446
 
 ---
 
-### 5. Get Final Result
+### 4. Get Final Result
 
 **GET** `/api/v1/parser/result/{job_id}`
 
-Mevcut endpoint kullanılabilir. Status `success` olduğunda full data döner.
+Status `success` olduğunda full data döner. **KVKK/GDPR compliant** - kişisel bilgiler parse edilmez.
 
 **Request:**
 ```bash
@@ -162,14 +153,18 @@ curl -X GET "http://localhost:8000/api/v1/parser/result/550e8400-e29b-41d4-a716-
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "user_id": "user123",
   "session_id": "session456",
+  "stored_file_path": "/tmp/cv_parser/cv_20250116_103000_550e8400.pdf",
   "parsed_data": {
     "profile": {
       "basics": {
-        "first_name": "John",
-        "last_name": "Doe",
-        ...
+        "profession": "Software Engineer",
+        "total_experience_in_years": 5,
+        "summary": "Experienced software engineer with expertise in Python and cloud technologies.",
+        "has_driving_license": true,
+        "skills": [...]
       },
-      ...
+      "professional_experiences": [...],
+      "education": [...]
     },
     "cv_language": "en"
   },
@@ -181,6 +176,8 @@ curl -X GET "http://localhost:8000/api/v1/parser/result/550e8400-e29b-41d4-a716-
   "updated_at": "2025-11-16T10:30:03Z"
 }
 ```
+
+**Not:** `parsed_data.profile.basics` içinde `first_name`, `last_name`, `emails`, `phone_numbers` vb. kişisel bilgiler **bulunmaz** (KVKK/GDPR uyumluluğu).
 
 ---
 

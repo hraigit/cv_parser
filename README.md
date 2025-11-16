@@ -4,10 +4,13 @@ Production-ready, scalable CV/Entity Parser API built with FastAPI, OpenAI, and 
 
 ## 🚀 Features
 
+- **KVKK/GDPR Compliant**: No personal data parsing - only professional information
+- **File Storage**: Automatic file storage with timestamp-based unique naming
+- **Async Background Processing**: FastAPI BackgroundTasks for non-blocking CV parsing
 - **Async-First Architecture**: Fully asynchronous operations for high performance
-- **OpenAI Integration**: GPT-4 powered CV parsing with structured JSON output
-- **File Processing**: Support for PDF, DOCX, TXT, and HTML files
-- **Smart Caching**: Redis-like TTL cache for file processing optimization
+- **OpenAI Integration**: GPT-3.5/GPT-4 powered CV parsing with structured JSON output
+- **File Processing**: Support for PDF, DOCX, TXT, HTML, RTF, CSV, and XML files
+- **Smart Caching**: TTL cache for file processing optimization
 - **Database Persistence**: PostgreSQL with async SQLAlchemy
 - **Clean Architecture**: Separation of concerns with repositories, services, and routes
 - **Singleton Patterns**: Thread-safe and async-safe singleton implementations
@@ -181,10 +184,22 @@ OPENAI_TEMPERATURE=0.1
 MAX_FILE_SIZE_MB=10
 CACHE_TTL_SECONDS=3600
 
+# File Storage
+FILE_STORAGE_ENABLED=true
+FILE_STORAGE_PATH=/tmp/cv_parser
+
 # Logging
 LOG_LEVEL=INFO
 LOG_FORMAT=json
 ```
+
+### File Storage Configuration
+
+Files are automatically stored with timestamp-based unique naming:
+- Format: `{original_name}_{YYYYMMDD_HHMMSS}_{job_id}.{ext}`
+- Example: `resume_20240115_143022_abc123.pdf`
+- Location: `FILE_STORAGE_PATH` (default: `/tmp/cv_parser`)
+- Database: File path stored in `stored_file_path` column
 
 ## 📖 API Usage
 
@@ -233,12 +248,16 @@ curl "http://localhost:8000/api/v1/health"
 - `GET /api/v1/` - API information
 - `GET /api/v1/health` - Health check
 
-### Parser
-- `POST /api/v1/parser/parse-text` - Parse CV from text
-- `POST /api/v1/parser/parse-file` - Parse CV from file
+### Parser (6 Parse Endpoints)
+- `POST /api/v1/parser/parse-text` - Parse CV from text (formatted or free-form)
+- `POST /api/v1/parser/parse-text-async` - Parse CV from text asynchronously
+- `POST /api/v1/parser/parse-file` - Parse CV from file (PDF, DOCX, TXT, HTML, RTF, CSV, XML)
+- `POST /api/v1/parser/parse-file-async` - Parse CV from file asynchronously
+- `GET /api/v1/parser/job/{job_id}` - Get async job status
 - `GET /api/v1/parser/result/{id}` - Get parse result
-- `GET /api/v1/parser/history/{user_id}` - Get user history
-- `GET /api/v1/parser/supported-formats` - Get supported formats
+
+### Utility
+- `GET /api/v1/parser/supported-formats` - Get supported file formats
 - `GET /api/v1/parser/cache-stats` - Get cache statistics
 
 ## 🗄️ Database Schema
@@ -253,6 +272,7 @@ CREATE TABLE parsed_cvs (
     input_text TEXT,
     file_name VARCHAR(500),
     file_mime_type VARCHAR(100),
+    stored_file_path VARCHAR(1000),
     parsed_data JSONB NOT NULL,
     cv_language VARCHAR(10),
     processing_time_seconds FLOAT,
@@ -264,6 +284,11 @@ CREATE TABLE parsed_cvs (
     updated_at TIMESTAMP NOT NULL
 );
 ```
+
+**Key Features:**
+- `stored_file_path`: Automatic file storage with timestamp-based unique naming
+- `parsed_data`: KVKK/GDPR-compliant JSON (no personal data - only professional information)
+- `status`: pending, processing, completed, failed for async job tracking
 
 ## 🧪 Testing
 

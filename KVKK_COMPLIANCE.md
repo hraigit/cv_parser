@@ -1,14 +1,14 @@
-# 🔒 KVKK Compliance & File Storage
+# 🔒 KVKK/GDPR Compliance & File Storage
 
 ## 📋 Genel Bakış
 
-Bu döküman, CV Parser API'nin KVKK (Kişisel Verilerin Korunması Kanunu) uyumluluğu ve dosya saklama özelliklerini açıklamaktadır.
+Bu döküman, CV Parser API'nin KVKK/GDPR (Kişisel Verilerin Korunması Kanunu / General Data Protection Regulation) uyumluluğu ve dosya saklama özelliklerini açıklamaktadır.
 
 **Son Güncelleme:** 2025-11-16
 
 ---
 
-## 🛡️ KVKK Compliance - Kişisel Verileri Parse Etmiyoruz
+## 🛡️ KVKK/GDPR Compliance - Kişisel Verileri Parse Etmiyoruz
 
 ### Çıkarılan Alanlar
 
@@ -111,7 +111,7 @@ Sadece **profesyonel bilgiler** parse ediliyor:
 OpenAI prompt'unda açıkça belirtilmiş:
 
 ```
-⚠️ PRIVACY & KVKK COMPLIANCE:
+⚠️ PRIVACY & KVKK/GDPR COMPLIANCE:
 - Summary must contain NO personal information, names, or contact details
 - Summary should describe professional profile WITHOUT any personal identifiers
 ```
@@ -292,7 +292,7 @@ Hata durumunda:
 
 ## 🔄 Schema Değişiklikleri
 
-### Eski Schema (KVKK-Uyumsuz)
+### Eski Schema (KVKK/GDPR-Uyumsuz)
 
 ```json
 {
@@ -324,7 +324,7 @@ Hata durumunda:
 }
 ```
 
-### Yeni Schema (KVKK-Uyumlu)
+### Yeni Schema (KVKK/GDPR-Uyumlu)
 
 ```json
 {
@@ -352,7 +352,7 @@ Hata durumunda:
 
 ### GET /api/v1/parser/result/{job_id}
 
-**Response (KVKK-Uyumlu):**
+**Response (KVKK/GDPR-Uyumlu):**
 
 ```json
 {
@@ -452,7 +452,7 @@ ls -lh /tmp/cv_parser/
 ### Test KVKK Compliance
 
 ```bash
-# Parse a CV
+# Parse a CV (parse-text handles both formatted and free-form text)
 JOB_ID=$(curl -X POST "http://localhost:8000/api/v1/parser/parse-text-async" \
   -H "Content-Type: application/json" \
   -d '{
@@ -463,12 +463,21 @@ JOB_ID=$(curl -X POST "http://localhost:8000/api/v1/parser/parse-text-async" \
 
 # Wait and get result
 sleep 5
-curl "http://localhost:8000/api/v1/parser/result/$JOB_ID" | jq '.parsed_data.profile.basics'
+RESULT=$(curl "http://localhost:8000/api/v1/parser/result/$JOB_ID")
+
+# Show parsed data
+echo $RESULT | jq '.parsed_data.profile.basics'
+
+# Verify file storage
+echo $RESULT | jq '.stored_file_path'
 
 # Verify: NO personal data in response
-# ✅ Should NOT contain: first_name, last_name, emails, phone_numbers
-# ✅ Should contain: total_experience_in_years, profession, summary, skills
+# ✅ Should NOT contain: first_name, last_name, emails, phone_numbers, date_of_birth, address
+# ✅ Should contain: total_experience_in_years, profession, summary, skills, has_driving_license
+# ✅ Should have: stored_file_path with timestamp-based filename
 ```
+
+**Not:** `parse-free-text-async` endpoint'i kaldırıldı. `parse-text-async` hem formatted hem free-form text'i handle eder.
 
 ---
 
@@ -505,7 +514,7 @@ summary = result['profile']['basics']['summary']  # ✅
 
 ## 📞 Sorumluluk
 
-**KVKK Compliance:**
+**KVKK/GDPR Compliance:**
 - Kişisel verileri parse etmiyoruz
 - Sadece profesyonel bilgileri saklıyoruz
 - Summary'de kişisel bilgi yok
@@ -521,4 +530,4 @@ summary = result['profile']['basics']['summary']  # ✅
 
 **Last Updated:** 2025-11-16  
 **Version:** 2.0.0  
-**KVKK Compliant:** ✅ Yes
+**KVKK/GDPR Compliant:** ✅ Yes

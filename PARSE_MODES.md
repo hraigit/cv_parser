@@ -1,6 +1,8 @@
 # CV Parse Modes
 
-Bu proje iki farklı CV parse etme modu sunmaktadır:
+Bu proje iki farklı CV parse etme modu sunmaktadır.
+
+**⚠️ KVKK/GDPR Uyumluluğu:** Tüm modlarda kişisel bilgiler (isim, soyisim, telefon, e-posta, adres, doğum tarihi, referanslar) parse edilmez. Sadece profesyonel bilgiler çıkarılır.
 
 ## 1. Basic Mode (Temel Mod)
 
@@ -8,9 +10,8 @@ Bu proje iki farklı CV parse etme modu sunmaktadır:
 
 **Açıklama:** Sadece üst düzey bilgileri parse eder, detaylı açıklamaları çıkarmaz.
 
-### Çıkarılan Bilgiler:
-- ✅ İsim, Soyisim
-- ✅ İletişim bilgileri (email, telefon, adres)
+### Çıkarılan Bilgiler
+
 - ✅ Meslek ve toplam deneyim süresi
 - ✅ **Çalıştığı yerler** (şirket adı ve pozisyon) - **DETAYSIZ**
 - ✅ **Eğitim** (okul adı) - **DETAYSIZ**
@@ -19,14 +20,17 @@ Bu proje iki farklı CV parse etme modu sunmaktadır:
 - ✅ Yetenekler/Beceriler (sadece isimler)
 - ✅ Diller ve seviyeleri
 - ✅ **Kısa özet** (2-3 cümle)
+- ✅ Ehliyet durumu
 
-### Çıkarılmayan Bilgiler:
+### Çıkarılmayan Bilgiler
+
+- ❌ **Kişisel bilgiler** (isim, soyisim, telefon, e-posta, adres, doğum tarihi)
 - ❌ İş deneyimi detayları (sorumluluklar, başarılar)
 - ❌ Proje detayları
 - ❌ Eğitim açıklamaları
 - ❌ Sertifika detayları
 - ❌ Ödül açıklamaları
-- ❌ Referans detayları (sadece isim ve pozisyon)
+- ❌ **Referans bilgileri** (KVKK/GDPR uyumluluğu)
 
 ### Kullanım Örneği:
 ```bash
@@ -43,17 +47,19 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
 
 **Açıklama:** Tam detaylı parse işlemi yapar, tüm bilgileri çıkarır.
 
-### Çıkarılan Bilgiler:
-- ✅ Tüm kişisel bilgiler
-- ✅ İletişim bilgileri
+### Çıkarılan Bilgiler
+
+- ✅ Meslek ve toplam deneyim süresi  
 - ✅ **Çalıştığı yerler** - **DETAYLI** (şirket, pozisyon, sorumluluklar, başarılar, projeler)
 - ✅ **Eğitim** - **DETAYLI** (okul, bölüm, not ortalaması, projeler)
 - ✅ **Sertifikalar** - **DETAYLI** (tüm açıklamalar)
 - ✅ **Ödüller** - **DETAYLI** (tüm açıklamalar)
 - ✅ Yetenekler/Beceriler (detaylı)
 - ✅ Diller ve seviyeleri
-- ✅ Referanslar (tüm bilgiler)
 - ✅ **Kapsamlı özet** (tüm CV içeriğinden oluşturulmuş)
+- ✅ Ehliyet durumu
+
+**❌ Kişisel bilgiler parse edilmez:** İsim, soyisim, telefon, e-posta, adres, doğum tarihi, referanslar (KVKK/GDPR uyumluluğu)
 
 ### Kullanım Örneği:
 ```bash
@@ -75,8 +81,8 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
 
 | Özellik | Basic Mode | Advanced Mode |
 |---------|------------|---------------|
-| İsim, Soyisim | ✅ | ✅ |
-| İletişim Bilgileri | ✅ | ✅ |
+| Kişisel Bilgiler | ❌ KVKK/GDPR | ❌ KVKK/GDPR |
+| Meslek/Deneyim | ✅ | ✅ |
 | Şirket Adları | ✅ | ✅ |
 | Pozisyon Başlıkları | ✅ | ✅ |
 | İş Sorumlulukları | ❌ | ✅ |
@@ -85,21 +91,26 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
 | Eğitim Detayları | ❌ | ✅ |
 | Beceriler | ✅ (liste) | ✅ (detaylı) |
 | Özet | ✅ (kısa) | ✅ (kapsamlı) |
+| Ehliyet | ✅ | ✅ |
 | Token Kullanımı | Daha az | Daha fazla |
 | İşlem Süresi | Daha hızlı | Normal |
 
+**KVKK/GDPR Notu:** Her iki modda da kişisel bilgiler (isim, soyisim, telefon, e-posta, adres, doğum tarihi, referanslar) parse edilmez.
+
 ## API Response Farkları
 
-### Basic Mode Response Örneği:
+### Basic Mode Response Örneği
+
 ```json
 {
   "id": "uuid",
   "parsed_data": {
     "profile": {
       "basics": {
-        "first_name": "Ahmet",
-        "last_name": "Yılmaz",
-        "summary": "10 yıllık deneyime sahip Yazılım Mühendisi. Python ve Java uzmanı."
+        "profession": "Yazılım Mühendisi",
+        "total_experience_in_years": 10,
+        "summary": "10 yıllık deneyime sahip Yazılım Mühendisi. Python ve Java uzmanı.",
+        "has_driving_license": true
       },
       "professional_experiences": [
         {
@@ -114,16 +125,27 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
 }
 ```
 
-### Advanced Mode Response Örneği:
+**Not:** Kişisel bilgiler (first_name, last_name, emails, phone_numbers) KVKK/GDPR uyumluluğu nedeniyle parse edilmez.
+
+### Advanced Mode Response Örneği
+
 ```json
 {
   "id": "uuid",
   "parsed_data": {
     "profile": {
       "basics": {
-        "first_name": "Ahmet",
-        "last_name": "Yılmaz",
-        "summary": "10 yıllık deneyime sahip Yazılım Mühendisi. Python, Java ve mikroservis mimarileri konusunda uzman. 5 kişilik ekip yönetimi deneyimi var. Cloud teknolojileri ve DevOps pratikleri konusunda derin bilgiye sahip."
+        "profession": "Yazılım Mühendisi",
+        "total_experience_in_years": 10,
+        "summary": "10 yıllık deneyime sahip Yazılım Mühendisi. Python, Java ve mikroservis mimarileri konusunda uzman. 5 kişilik ekip yönetimi deneyimi var. Cloud teknolojileri ve DevOps pratikleri konusunda derin bilgiye sahip.",
+        "has_driving_license": true,
+        "skills": [
+          {
+            "name": "Python",
+            "proficiency": "Expert",
+            "years_of_experience": 10
+          }
+        ]
       },
       "professional_experiences": [
         {
@@ -137,6 +159,8 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
   "parse_mode": "advanced"
 }
 ```
+
+**Not:** Kişisel bilgiler (first_name, last_name, emails, phone_numbers, date_of_birth, address) KVKK/GDPR uyumluluğu nedeniyle parse edilmez.
 
 ## Ne Zaman Hangi Modu Kullanmalı?
 
