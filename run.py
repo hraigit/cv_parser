@@ -1,4 +1,5 @@
 """Application runner script."""
+
 import uvicorn
 
 from app.core.config import settings

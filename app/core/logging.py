@@ -1,4 +1,5 @@
 """Async-safe singleton logger implementation."""
+
 import asyncio
 import logging
 import sys
@@ -26,6 +27,7 @@ class AsyncSafeLoggerSingleton:
             return
 
         import threading
+
         self._thread_lock = threading.Lock()
         self._initialized = True
         self._logger = self._setup_logger()

@@ -67,7 +67,8 @@ class PyMuPDFParser:
             # Extract text blocks from all pages
             all_blocks = []
 
-            for page_num, page in enumerate(pdf_document):
+            for page_num in range(len(pdf_document)):
+                page = pdf_document[page_num]
                 # Get text blocks with position information
                 # blocks format: (x0, y0, x1, y1, "text", block_no, block_type)
                 blocks = page.get_text("blocks")

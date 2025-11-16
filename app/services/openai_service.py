@@ -4,11 +4,16 @@ import asyncio
 import base64
 import json
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Literal, Optional, cast
 
 from openai import AsyncOpenAI
 from openai import OpenAIError as OpenAISDKError
 from openai import RateLimitError
+from openai.types.chat import (
+    ChatCompletionContentPartImageParam,
+    ChatCompletionContentPartParam,
+    ChatCompletionContentPartTextParam,
+)
 from pydantic import ValidationError as PydanticValidationError
 
 from app.core.config import settings
@@ -312,6 +317,21 @@ class OpenAIService:
                 "Make sure to extract all visible text and structure it properly."
             )
 
+            # Cast detail to correct literal type
+            detail = cast(Literal["auto", "low", "high"], settings.OPENAI_VISION_DETAIL)
+
+            # Build properly typed content parts
+            content_parts: List[ChatCompletionContentPartParam] = [
+                ChatCompletionContentPartTextParam(type="text", text=vision_prompt),
+                ChatCompletionContentPartImageParam(
+                    type="image_url",
+                    image_url={
+                        "url": f"data:{mime_type};base64,{base64_image}",
+                        "detail": detail,
+                    },
+                ),
+            ]
+
             # Call OpenAI Vision API
             api_start_time = time.time()
             response = await self._client.chat.completions.create(
@@ -320,16 +340,7 @@ class OpenAIService:
                     {"role": "system", "content": system_prompt},
                     {
                         "role": "user",
-                        "content": [
-                            {"type": "text", "text": vision_prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:{mime_type};base64,{base64_image}",
-                                    "detail": settings.OPENAI_VISION_DETAIL,
-                                },
-                            },
-                        ],
+                        "content": content_parts,
                     },
                 ],
                 max_tokens=self._max_tokens,

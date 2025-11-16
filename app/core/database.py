@@ -1,4 +1,5 @@
 """Async database configuration with singleton pattern."""
+
 import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
@@ -7,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
-    create_async_engine
+    create_async_engine,
 )
 from sqlalchemy.orm import declarative_base
 

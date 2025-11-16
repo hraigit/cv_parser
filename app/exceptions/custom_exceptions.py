@@ -1,4 +1,5 @@
 """Custom exception classes."""
+
 from typing import Optional
 
 
@@ -6,10 +7,7 @@ class BaseAPIException(Exception):
     """Base exception for API errors."""
 
     def __init__(
-        self,
-        message: str,
-        status_code: int = 500,
-        error_code: Optional[str] = None
+        self, message: str, status_code: int = 500, error_code: Optional[str] = None
     ):
         self.message = message
         self.status_code = status_code
@@ -36,7 +34,9 @@ class FileSizeLimitError(BaseAPIException):
     """Exception for file size limit exceeded."""
 
     def __init__(self, message: str):
-        super().__init__(message, status_code=413, error_code="FILE_SIZE_LIMIT_EXCEEDED")
+        super().__init__(
+            message, status_code=413, error_code="FILE_SIZE_LIMIT_EXCEEDED"
+        )
 
 
 class BatchProcessingError(BaseAPIException):
