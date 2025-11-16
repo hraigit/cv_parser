@@ -41,8 +41,9 @@ class ProfileBasics(BaseModel):
     skills: List[str] = Field(
         default_factory=list, description="List of professional skills"
     )
-    has_driving_license: bool = Field(
-        default=False, description="Whether candidate has driving license"
+    has_driving_license: Optional[str] = Field(
+        default="not_specified",
+        description="Driving license status: 'yes', 'no', or 'not_specified' if not mentioned in CV",
     )
     total_experience_in_years: Optional[float] = Field(
         None, description="Total years of professional experience (calculated)"

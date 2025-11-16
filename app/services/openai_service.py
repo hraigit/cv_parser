@@ -42,7 +42,10 @@ OUTPUT RULES:
 5. ANY non-JSON output is considered a critical failure
 
 OUTPUT SCHEMA:
-{"profile":{"basics":{"profession":"","summary":"","skills":[],"has_driving_license":false},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
+{"profile":{"basics":{"profession":"","summary":"","skills":[],"has_driving_license":"not_specified"},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
+
+FIELD NOTES:
+- has_driving_license: Use "yes" if CV clearly states they have a driving license, "no" if CV explicitly states they don't have one, "not_specified" if CV doesn't mention driving license at all
 
 PROCESSING REQUIREMENTS:
 - Extract all PROFESSIONAL information from the input CV
@@ -83,7 +86,10 @@ OUTPUT RULES:
 5. ANY non-JSON output is considered a critical failure
 
 OUTPUT SCHEMA:
-{"profile":{"basics":{"profession":"","summary":"","skills":[],"has_driving_license":false},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
+{"profile":{"basics":{"profession":"","summary":"","skills":[],"has_driving_license":"not_specified"},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
+
+FIELD NOTES:
+- has_driving_license: Use "yes" if CV clearly states they have a driving license, "no" if CV explicitly states they don't have one, "not_specified" if CV doesn't mention driving license at all
 
 BASIC PARSING MODE - PROCESSING REQUIREMENTS:
 - Extract ONLY high-level, essential PROFESSIONAL information
