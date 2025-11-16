@@ -1,268 +1,120 @@
 # CV Parser API
 
-Production-ready, scalable CV/Entity Parser API built with FastAPI, OpenAI, and PostgreSQL.
+Production-ready CV/Resume Parser API powered by FastAPI, OpenAI GPT-4, and PostgreSQL.
 
-## 🚀 Features
+## 🚀 Quick Start
 
-- **KVKK/GDPR Compliant**: No personal data parsing - only professional information
-- **File Storage**: Automatic file storage with timestamp-based unique naming
-- **Async Background Processing**: FastAPI BackgroundTasks for non-blocking CV parsing
-- **Async-First Architecture**: Fully asynchronous operations for high performance
-- **OpenAI Integration**: GPT-3.5/GPT-4 powered CV parsing with structured JSON output
-- **File Processing**: Support for PDF, DOCX, TXT, HTML, RTF, CSV, and XML files
-- **Smart Caching**: TTL cache for file processing optimization
-- **Database Persistence**: PostgreSQL with async SQLAlchemy
-- **Clean Architecture**: Separation of concerns with repositories, services, and routes
-- **Singleton Patterns**: Thread-safe and async-safe singleton implementations
-- **Docker Ready**: Complete Docker and docker-compose setup
-- **Database Migrations**: Alembic for schema version control
-- **Production Logging**: Structured JSON logging with file rotation
-- **API Documentation**: Auto-generated OpenAPI/Swagger docs
-- **Health Checks**: Built-in health check endpoints
+### 1. Database Setup (Alembic)
 
-## 📁 Project Structure
-
-```
-cv-parser-api/
-├── app/
-│   ├── __init__.py
-│   ├── main.py                      # FastAPI application entry point
-│   ├── api/
-│   │   └── v1/
-│   │       └── routes/
-│   │           ├── health.py         # Health check endpoints
-│   │           └── parser.py         # Parser endpoints
-│   ├── core/
-│   │   ├── config.py                 # Settings and configuration
-│   │   ├── database.py               # Database connection manager
-│   │   └── logging.py                # Logging configuration
-│   ├── models/
-│   │   └── parser.py                 # SQLAlchemy models
-│   ├── schemas/
-│   │   ├── common.py                 # Common Pydantic schemas
-│   │   └── parser.py                 # Parser-specific schemas
-│   ├── repositories/
-│   │   └── parser_repository.py      # Database operations
-│   ├── services/
-│   │   ├── file_service.py           # File processing service
-│   │   ├── openai_service.py         # OpenAI integration
-│   │   └── parser_service.py         # Business logic
-│   ├── utils/
-│   │   ├── file_utils.py             # File processing utilities
-│   │   └── text_utils.py             # Text processing utilities
-│   └── exceptions/
-│       └── custom_exceptions.py      # Custom exception classes
-├── alembic/
-│   ├── versions/                     # Database migrations
-│   └── env.py                        # Alembic configuration
-├── tests/                            # Test files
-├── logs/                             # Application logs
-├── .env.example                      # Environment variables template
-├── .gitignore
-├── alembic.ini                       # Alembic configuration
-├── docker-compose.yml                # Docker compose setup
-├── Dockerfile                        # Docker image definition
-├── Makefile                          # Automation commands
-├── README.md
-├── requirements.txt                  # Python dependencies
-└── run.py                            # Application runner
-
-```
-
-## 🛠️ Technology Stack
-
-- **Framework**: FastAPI 0.109+
-- **Language**: Python 3.11+
-- **Database**: PostgreSQL 15+ with asyncpg
-- **ORM**: SQLAlchemy 2.0 (async)
-- **AI**: OpenAI GPT-4
-- **File Processing**: langchain-community, PyPDF, python-docx, BeautifulSoup4
-- **Caching**: cachetools (TTL Cache)
-- **Migrations**: Alembic
-- **Logging**: structlog + python-json-logger
-- **Deployment**: Docker + docker-compose
-
-## ⚙️ Installation
-
-### Prerequisites
-
-- Python 3.11+
-- PostgreSQL 15+
-- Docker and Docker Compose (optional)
-- OpenAI API Key
-
-### Local Setup
-
-1. **Clone the repository**
 ```bash
-git clone <repository-url>
-cd cv-parser-api
-```
-
-2. **Create virtual environment**
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**
-```bash
-make install
-# or
+# Install dependencies
 pip install -r requirements.txt
-```
 
-4. **Setup environment variables**
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
+# Configure database URL in .env
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/cv_parser_db
 
-5. **Initialize database**
-```bash
-# Make sure PostgreSQL is running
-make upgrade
-# or
+# Run migrations to create database schema
 alembic upgrade head
 ```
 
-6. **Run the application**
+### 2. Start the API
+
 ```bash
-make run
-# or
-python run.py
-```
-
-### Docker Setup
-
-1. **Configure environment**
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-2. **Build and run**
-```bash
-make docker-up
-# or
-docker-compose up -d
-```
-
-3. **Check logs**
-```bash
-make docker-logs
-# or
-docker-compose logs -f app
-```
-
-4. **Access the API**
-- API: http://localhost:8000
-- Docs: http://localhost:8000/docs
-- Health: http://localhost:8000/api/v1/health
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file based on `.env.example`:
-
-```env
-# Application
-APP_NAME=CV Parser API
-DEBUG=False
-ENVIRONMENT=production
-
-# Database
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/cv_parser_db
-
-# OpenAI
+# Configure OpenAI API key in .env
 OPENAI_API_KEY=sk-your-api-key-here
-OPENAI_MODEL=gpt-3.5-turbo
-OPENAI_TEMPERATURE=0.1
 
-# File Processing
-MAX_FILE_SIZE_MB=10
-CACHE_TTL_SECONDS=3600
+# Run the application
+python run.py
 
-# File Storage
-FILE_STORAGE_ENABLED=true
-FILE_STORAGE_PATH=/tmp/cv_parser
-
-# Logging
-LOG_LEVEL=INFO
-LOG_FORMAT=json
+# Access API documentation
+# http://localhost:8000/docs
 ```
 
-### File Storage Configuration
+## 🎯 API Endpoints
 
-Files are automatically stored with timestamp-based unique naming:
-- Format: `{original_name}_{YYYYMMDD_HHMMSS}_{job_id}.{ext}`
-- Example: `resume_20240115_143022_abc123.pdf`
-- Location: `FILE_STORAGE_PATH` (default: `/tmp/cv_parser`)
-- Database: File path stored in `stored_file_path` column
+### Synchronous Parsing (Immediate Response)
 
-## 📖 API Usage
-
-### Parse CV from Text
-
+**Parse from Text:**
 ```bash
 curl -X POST "http://localhost:8000/api/v1/parser/parse-text" \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "user123",
     "session_id": "session456",
-    "text": "Your CV text here..."
+    "text": "Software Engineer with 5 years experience in Python..."
   }'
 ```
 
-### Parse CV from File
-
+**Parse from File:**
 ```bash
 curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
   -F "user_id=user123" \
   -F "session_id=session456" \
-  -F "file=@/path/to/cv.pdf"
+  -F "parse_mode=advanced" \
+  -F "file=@cv.pdf"
 ```
 
-### Get Parse Result
+### Asynchronous Parsing (Background Processing)
 
+**1. Start Async Job:**
 ```bash
-curl "http://localhost:8000/api/v1/parser/result/{record_id}"
+curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
+  -F "user_id=user123" \
+  -F "session_id=session456" \
+  -F "parse_mode=advanced" \
+  -F "file=@cv.pdf"
+
+# Response: {"job_id": "550e8400-...", "status": "processing"}
 ```
 
-### Get User History
-
+**2. Check Job Status:**
 ```bash
-curl "http://localhost:8000/api/v1/parser/history/user123?page=1&page_size=10"
+curl "http://localhost:8000/api/v1/parser/job/{job_id}"
 ```
 
-### Health Check
-
+**3. Get Final Result:**
 ```bash
-curl "http://localhost:8000/api/v1/health"
+curl "http://localhost:8000/api/v1/parser/result/{job_id}"
 ```
 
-## 🎯 API Endpoints
+### Utility Endpoints
 
-### Health & Status
-- `GET /api/v1/` - API information
 - `GET /api/v1/health` - Health check
+- `GET /api/v1/parser/supported-formats` - Supported file types (PDF, DOCX, TXT, HTML, RTF, CSV, XML)
+- `GET /api/v1/parser/cache-stats` - Cache statistics
+- `GET /api/v1/parser/history/{user_id}?page=1&page_size=10` - User parsing history
 
-### Parser (6 Parse Endpoints)
-- `POST /api/v1/parser/parse-text` - Parse CV from text (formatted or free-form)
-- `POST /api/v1/parser/parse-text-async` - Parse CV from text asynchronously
-- `POST /api/v1/parser/parse-file` - Parse CV from file (PDF, DOCX, TXT, HTML, RTF, CSV, XML)
-- `POST /api/v1/parser/parse-file-async` - Parse CV from file asynchronously
-- `GET /api/v1/parser/job/{job_id}` - Get async job status
-- `GET /api/v1/parser/result/{id}` - Get parse result
+## 📋 Parse Modes
 
-### Utility
-- `GET /api/v1/parser/supported-formats` - Get supported file formats
-- `GET /api/v1/parser/cache-stats` - Get cache statistics
+See [PARSE_MODES.md](PARSE_MODES.md) for details on `basic` vs `advanced` parsing modes.
+
+## 🔒 KVKK/GDPR Compliance
+
+**⚠️ No Personal Data Parsing**
+
+This API does **not** parse personal information:
+- ❌ Name, surname, date of birth
+- ❌ Email, phone, address
+- ❌ References
+
+Only professional data is extracted:
+- ✅ Work experience, education, skills
+- ✅ Certifications, languages, awards
+- ✅ Professional summary
+
+## 💾 File Storage
+
+Uploaded files are automatically stored with unique timestamp-based naming:
+
+```
+Format: {name}_{YYYYMMDD_HHMMSS}_{job_id}.{ext}
+Example: resume_20251116_143022_550e8400.pdf
+Location: /tmp/cv_parser (configurable via FILE_STORAGE_PATH)
+```
+
+File paths are stored in the database (`stored_file_path` field).
 
 ## 🗄️ Database Schema
-
-### parsed_cvs Table
 
 ```sql
 CREATE TABLE parsed_cvs (
@@ -285,171 +137,78 @@ CREATE TABLE parsed_cvs (
 );
 ```
 
-**Key Features:**
-- `stored_file_path`: Automatic file storage with timestamp-based unique naming
-- `parsed_data`: KVKK/GDPR-compliant JSON (no personal data - only professional information)
-- `status`: pending, processing, completed, failed for async job tracking
-
-## 🧪 Testing
+## 🐳 Docker Deployment
 
 ```bash
-# Run tests
-make test
+# Build and run with Docker Compose
+docker-compose up -d
 
-# Run with coverage
-pytest tests/ -v --cov=app --cov-report=html
+# Access API
+http://localhost:8000
 ```
 
-## 📊 Logging
+## 🔧 Configuration
 
-Logs are stored in `logs/app.log` with JSON format:
+Create `.env` file:
 
-```json
-{
-  "asctime": "2024-01-01 12:00:00",
-  "name": "CV Parser API",
-  "levelname": "INFO",
-  "message": "Processing file: resume.pdf",
-  "pathname": "/app/services/file_service.py",
-  "lineno": 42
-}
+```env
+# Database
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/cv_parser_db
+
+# OpenAI
+OPENAI_API_KEY=sk-your-api-key-here
+OPENAI_MODEL=gpt-4
+OPENAI_TEMPERATURE=0.1
+
+# File Storage
+FILE_STORAGE_ENABLED=true
+FILE_STORAGE_PATH=/tmp/cv_parser
+
+# Application
+MAX_FILE_SIZE_MB=10
+CACHE_TTL_SECONDS=3600
+LOG_LEVEL=INFO
 ```
 
-## 🚢 Deployment
+## 📊 Supported File Formats
 
-### Docker Production Deployment
+- **PDF** - `.pdf`
+- **Word** - `.doc`, `.docx`
+- **Text** - `.txt`
+- **HTML** - `.html`, `.htm`
+- **RTF** - `.rtf`
+- **Data** - `.csv`, `.xml`
 
-```bash
-# Build production image
-docker build -t cv-parser-api:latest .
+## 🛠️ Technology Stack
 
-# Run with environment file
-docker run -d \
-  --name cv-parser-api \
-  --env-file .env \
-  -p 8000:8000 \
-  cv-parser-api:latest
-```
-
-### Database Migrations
-
-```bash
-# Create new migration
-make migrate message="Add new field"
-
-# Apply migrations
-make upgrade
-
-# Rollback
-make downgrade
-```
-
-## 🔒 Security Considerations
-
-- Never commit `.env` file
-- Use environment variables for secrets
-- Implement rate limiting in production
-- Use HTTPS in production
-- Implement authentication/authorization
-- Regularly update dependencies
-- Review OpenAI usage limits
-
-## 📈 Performance
-
-- **Async Operations**: All I/O operations are async
-- **Connection Pooling**: Database connection pool (size: 20)
-- **Caching**: File processing results cached (1 hour TTL)
-- **Thread Pool**: 4 workers for CPU-bound operations
-- **Batch Processing**: Support for multiple files
-
-## 🛡️ Error Handling
-
-All errors return structured JSON:
-
-```json
-{
-  "error_code": "FILE_PROCESSING_ERROR",
-  "message": "Failed to process file",
-  "path": "/api/v1/parser/parse-file"
-}
-```
+- **FastAPI** 0.109+ - High-performance async web framework
+- **OpenAI GPT-4** - AI-powered CV parsing
+- **PostgreSQL** 15+ with asyncpg - Database
+- **SQLAlchemy** 2.0 - Async ORM
+- **Alembic** - Database migrations
+- **Docker** - Containerization
 
 ## 📝 Development
 
-### Adding New Features
-
-1. Create models in `app/models/`
-2. Define schemas in `app/schemas/`
-3. Implement repository in `app/repositories/`
-4. Add service logic in `app/services/`
-5. Create routes in `app/api/v1/routes/`
-6. Add tests in `tests/`
-
-### Code Style
-
 ```bash
-# Format code
-make format
+# Install dependencies
+pip install -r requirements.txt
 
-# Lint code
-make lint
+# Create new migration
+alembic revision -m "description"
+
+# Apply migrations
+alembic upgrade head
+
+# Run tests
+pytest tests/ -v
+
+# Run with auto-reload
+python run.py
 ```
 
-## 🤝 Contributing
+## 📚 Documentation
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 👥 Authors
-
-- Senior Python Developer Team
-
-## 📞 Support
-
-For issues and questions:
-- Create an issue in the repository
-- Contact: support@cvparser.com
-
-## 🔄 Version History
-
-- **1.0.0** (2024-01-01) - Initial release
-  - CV parsing from text and files
-  - OpenAI GPT-4 integration
-  - PostgreSQL persistence
-  - Docker deployment
-  - Complete API documentation
-
-## 🎓 Architecture Decisions
-
-### Singleton Pattern
-All services use async-safe singleton patterns for:
-- Resource efficiency
-- Configuration management
-- Connection pooling
-- Cache management
-
-### Repository Pattern
-Clean separation between data access and business logic:
-- Single Responsibility Principle
-- Testability
-- Maintainability
-
-### Service Layer
-Business logic isolated in service layer:
-- Reusable operations
-- Transaction management
-- Error handling
-
-## 📚 Additional Resources
-
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [SQLAlchemy Async](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html)
-- [OpenAI API](https://platform.openai.com/docs)
-- [Alembic Documentation](https://alembic.sqlalchemy.org/)
+- [PARSE_MODES.md](PARSE_MODES.md) - Basic vs Advanced parsing modes
+- API Docs: http://localhost:8000/docs
+- Alembic: https://alembic.sqlalchemy.org/
