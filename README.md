@@ -1,6 +1,79 @@
 # CV Parser API
 
-Production-ready CV/Resume Parser API powered by FastAPI, OpenAI GPT-4, and PostgreSQL.
+Production-ready CV/Resume Parser API powered by FastAPI, OpenAI (GPT-4o-mini for Vision, GPT-3.5-turbo for Text), and PostgreSQL.
+
+## 🎯 Quick Guide - API Flow
+
+```mermaid
+graph LR
+    A[📄 Text CV] -->|POST /parse-text-async| B[🔄 job_id]
+    C[📎 File CV<br/>PDF/DOCX/Image] -->|POST /parse-file-async| B
+    B -->|GET /job/:job_id| D{Status?}
+    D -->|processing| D
+    D -->|success| E[✅ GET /result/:job_id<br/>Parsed CV Data]
+    D -->|failed| F[❌ Error Message]
+    G[👤 User] -->|GET /history/:user_id| H[📋 All CVs List]
+    
+    style A fill:#e1f5ff
+    style C fill:#e1f5ff
+    style B fill:#fff4e6
+    style E fill:#e8f5e9
+    style F fill:#ffebee
+    style H fill:#f3e5f5
+```
+
+### 🚀 Usage Examples
+
+**1️⃣ Parse Text CV (Async)**
+```bash
+curl -X POST "http://localhost:8000/api/v1/parser/parse-text-async" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "user123", "session_id": "session456", "text": "..."}'
+# → {"job_id": "550e8400-...", "status": "processing"}
+```
+
+**2️⃣ Parse File CV (Async)**
+```bash
+curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
+  -F "user_id=user123" -F "session_id=session456" -F "file=@cv.pdf"
+# → {"job_id": "550e8400-...", "status": "processing"}
+```
+
+**3️⃣ Check Status**
+```bash
+curl "http://localhost:8000/api/v1/parser/job/550e8400-..."
+# → {"status": "success", "processing_time_seconds": 3.2}
+```
+
+**4️⃣ Get Result**
+```bash
+curl "http://localhost:8000/api/v1/parser/result/550e8400-..."
+# → Full parsed CV data (JSON)
+```
+
+**5️⃣ Get User History**
+```bash
+curl "http://localhost:8000/api/v1/parser/history/user123?page=1&page_size=10"
+# → List of all parsed CVs for this user
+```
+
+**6️⃣ Get Latest CV**
+```bash
+curl "http://localhost:8000/api/v1/parser/latest/user123"
+# → Most recent parsed CV for this user
+```
+
+---
+
+## ✨ Key Features
+
+- **🖼️ Vision API Support** - Parse CV images (JPG, PNG, WEBP, GIF) directly with GPT-4o-mini Vision
+- **📄 Multi-format Support** - PDF, DOCX, TXT, HTML, RTF, CSV, XML, and image files
+- **🚀 Dual Model Strategy** - GPT-3.5-turbo for text (fast & cheap), GPT-4o-mini for images (powerful)
+- **🔒 KVKK/GDPR Compliant** - Only professional data, no personal information
+- **⚡ Async Processing** - Background job processing for high concurrency
+- **💾 Auto File Storage** - Timestamp-based unique file naming
+- **🎯 Parse Modes** - Basic (fast) vs Advanced (detailed) parsing
 
 ## 🚀 Quick Start
 
@@ -84,6 +157,21 @@ curl "http://localhost:8000/api/v1/parser/result/{job_id}"
 - `GET /api/v1/parser/cache-stats` - Cache statistics
 - `GET /api/v1/parser/history/{user_id}?page=1&page_size=10` - User parsing history
 
+## 🤖 Model Strategy
+
+### Optimized for Cost & Performance
+
+| File Type | Model | Why? |
+|-----------|-------|------|
+| **Text-based** (PDF, DOCX, TXT, etc.) | `gpt-3.5-turbo` | ⚡ Fast & 💰 ~90% cheaper |
+| **Images** (JPG, PNG, WEBP, GIF) | `gpt-4o-mini` | 🖼️ Vision API required |
+
+**Benefits:**
+- 💰 **Cost Savings**: Text parsing uses cheaper GPT-3.5-turbo
+- ⚡ **Speed**: GPT-3.5-turbo responds faster for text
+- 🎯 **Quality**: GPT-4o-mini for images when Vision API is needed
+- 🔧 **Flexibility**: Easily configurable via environment variables
+
 ## 📋 Parse Modes
 
 See [PARSE_MODES.md](PARSE_MODES.md) for details on `basic` vs `advanced` parsing modes.
@@ -157,8 +245,10 @@ DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/cv_parser_db
 
 # OpenAI
 OPENAI_API_KEY=sk-your-api-key-here
-OPENAI_MODEL=gpt-4
+OPENAI_MODEL=gpt-4o-mini          # For Vision API (images)
+OPENAI_TEXT_MODEL=gpt-3.5-turbo   # For text parsing (PDF, DOCX, etc.)
 OPENAI_TEMPERATURE=0.1
+OPENAI_VISION_DETAIL=high
 
 # File Storage
 FILE_STORAGE_ENABLED=true
@@ -178,11 +268,13 @@ LOG_LEVEL=INFO
 - **HTML** - `.html`, `.htm`
 - **RTF** - `.rtf`
 - **Data** - `.csv`, `.xml`
+- **Images** (via GPT-4o Vision API) - `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`
 
 ## 🛠️ Technology Stack
 
 - **FastAPI** 0.109+ - High-performance async web framework
-- **OpenAI GPT-4** - AI-powered CV parsing
+- **OpenAI GPT-4o-mini** - Vision API for image CV parsing
+- **OpenAI GPT-3.5-turbo** - Fast text-based CV parsing
 - **PostgreSQL** 15+ with asyncpg - Database
 - **SQLAlchemy** 2.0 - Async ORM
 - **Alembic** - Database migrations

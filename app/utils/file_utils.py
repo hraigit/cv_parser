@@ -420,6 +420,12 @@ class FileProcessor:
             "text/tab-separated-values": TextParser(),
             "application/xml": BS4HTMLParser(),  # XML can be parsed like HTML
             "text/xml": BS4HTMLParser(),
+            # Image formats (processed via OpenAI Vision API)
+            "image/jpeg": None,  # Vision API
+            "image/jpg": None,  # Vision API
+            "image/png": None,  # Vision API
+            "image/webp": None,  # Vision API
+            "image/gif": None,  # Vision API (non-animated)
         }
 
         self.supported_mimetypes = sorted(self.SUPPORTED_HANDLERS.keys())
@@ -487,6 +493,17 @@ class FileProcessor:
             logger.error(f"Failed to detect MIME type: {str(e)}")
             raise FileProcessingError(f"Failed to detect file type: {str(e)}") from e
 
+    def is_image_format(self, mime_type: str) -> bool:
+        """Check if MIME type is an image format.
+
+        Args:
+            mime_type: MIME type string
+
+        Returns:
+            True if image format, False otherwise
+        """
+        return mime_type.startswith("image/")
+
     def _guess_mimetype_from_extension(self, filename: str) -> Optional[str]:
         """Guess MIME type from file extension.
 
@@ -512,6 +529,12 @@ class FileProcessor:
             "csv": "text/csv",
             "xml": "application/xml",
             "xhtml": "application/xhtml+xml",
+            # Image formats
+            "jpg": "image/jpeg",
+            "jpeg": "image/jpeg",
+            "png": "image/png",
+            "webp": "image/webp",
+            "gif": "image/gif",
         }
 
         return extension_mapping.get(extension)
@@ -543,6 +566,7 @@ class FileProcessor:
 
         Returns:
             Tuple of (extracted_text, mime_type)
+            For image files, extracted_text will be empty string
 
         Raises:
             FileProcessingError: If extraction fails
@@ -553,6 +577,13 @@ class FileProcessor:
 
             # Detect MIME type with filename fallback
             mime_type = self.guess_mimetype(content, filename)
+
+            # Check if it's an image format - images are processed via Vision API
+            if self.is_image_format(mime_type):
+                logger.info(
+                    f"Image file detected: {filename} ({mime_type}) - will use Vision API"
+                )
+                return "", mime_type  # Empty text, Vision API will handle it
 
             # Create blob for processing
             blob = Blob.from_data(data=content, path=filename, mime_type=mime_type)

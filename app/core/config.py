@@ -34,9 +34,15 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: str = Field(default="")
-    OPENAI_MODEL: str = Field(default="gpt-5-mini")
+    OPENAI_MODEL: str = Field(default="gpt-4o-mini", description="Default/Vision model")
+    OPENAI_TEXT_MODEL: str = Field(
+        default="gpt-3.5-turbo", description="Model for text-based CV parsing"
+    )
     OPENAI_MAX_TOKENS: int = Field(default=3000)
     OPENAI_TEMPERATURE: float = Field(default=0.1)
+    OPENAI_VISION_DETAIL: str = Field(
+        default="high", description="Vision API detail level: low, high, or auto"
+    )
 
     # File Processing
     MAX_FILE_SIZE_MB: int = Field(default=10)

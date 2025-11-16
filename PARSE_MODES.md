@@ -94,10 +94,14 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
 | Skills | ✅ (list) | ✅ (detailed) |
 | Summary | ✅ (brief) | ✅ (comprehensive) |
 | Driving License | ✅ | ✅ |
+| **Text Model** | gpt-3.5-turbo | gpt-3.5-turbo |
+| **Image Model** | gpt-4o-mini | gpt-4o-mini |
 | Token Usage | Lower | Higher |
 | Processing Time | Faster | Normal |
 
 **KVKK/GDPR Note:** In both modes, personal information (name, surname, phone, email, address, date of birth, references) is NOT parsed.
+
+**Model Note:** Text-based files use GPT-3.5-turbo (fast & cheap), image files use GPT-4o-mini Vision API.
 
 ## API Response Examples
 

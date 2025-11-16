@@ -1,6 +1,7 @@
 """OpenAI service with async-safe singleton pattern."""
 
 import asyncio
+import base64
 import json
 import time
 from typing import Any, Dict, Optional
@@ -126,11 +127,14 @@ class OpenAIService:
 
         self._initialized = True
         self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self._model = settings.OPENAI_MODEL
+        self._model = settings.OPENAI_MODEL  # For Vision API
+        self._text_model = settings.OPENAI_TEXT_MODEL  # For text parsing
         self._max_tokens = settings.OPENAI_MAX_TOKENS
         self._temperature = settings.OPENAI_TEMPERATURE
 
-        logger.info(f"OpenAI service initialized with model: {self._model}")
+        logger.info(
+            f"OpenAI service initialized - Vision: {self._model}, Text: {self._text_model}"
+        )
 
     async def parse_cv(
         self, cv_text: str, parse_mode: str = "advanced"
@@ -165,7 +169,7 @@ class OpenAIService:
             # Call OpenAI API
             api_start_time = time.time()
             response = await self._client.chat.completions.create(
-                model=self._model,
+                model=self._text_model,  # Use text model for text parsing
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": cv_text},
@@ -182,7 +186,7 @@ class OpenAIService:
 
             logger.info(
                 f"🤖 [TIMING] OpenAI API call completed in {api_time:.2f} seconds "
-                f"(tokens: {tokens_used}, model: {self._model})"
+                f"(tokens: {tokens_used}, model: {self._text_model})"
             )
 
             # Check if content is None
@@ -243,7 +247,7 @@ class OpenAIService:
 
             # Add metadata
             parsed_data["_metadata"] = {
-                "model": self._model,
+                "model": self._text_model,
                 "tokens_used": tokens_used,
                 "api_time": round(api_time, 2),
                 "json_parse_time": round(json_time, 3),
@@ -266,6 +270,161 @@ class OpenAIService:
         except Exception as e:
             logger.error(f"Unexpected error during OpenAI call: {str(e)}")
             raise OpenAIError(f"Failed to parse CV: {str(e)}")
+
+    async def parse_cv_from_image(
+        self, image_content: bytes, mime_type: str, parse_mode: str = "advanced"
+    ) -> Dict[str, Any]:
+        """Parse CV from image using OpenAI Vision API.
+
+        Args:
+            image_content: Image file content as bytes
+            mime_type: Image MIME type (image/jpeg, image/png, etc.)
+            parse_mode: Parsing mode - "basic" or "advanced"
+
+        Returns:
+            Parsed CV data as dictionary
+
+        Raises:
+            OpenAIError: If API call fails
+            OpenAIRateLimitError: If rate limit is exceeded
+            OpenAIInvalidResponseError: If response is invalid JSON
+        """
+        try:
+            # Select appropriate system prompt based on parse mode
+            if parse_mode == "basic":
+                system_prompt = CV_PARSE_SYSTEM_PROMPT_BASIC
+                logger.info(
+                    f"🖼️ [VISION] Starting BASIC OpenAI Vision CV parsing (image type: {mime_type})"
+                )
+            else:
+                system_prompt = CV_PARSE_SYSTEM_PROMPT_ADVANCED
+                logger.info(
+                    f"🖼️ [VISION] Starting ADVANCED OpenAI Vision CV parsing (image type: {mime_type})"
+                )
+
+            # Encode image to base64
+            base64_image = base64.b64encode(image_content).decode("utf-8")
+
+            # Prepare vision message
+            vision_prompt = (
+                "Extract all professional information from this CV/Resume image. "
+                "Parse the content and return it in the specified JSON format. "
+                "Make sure to extract all visible text and structure it properly."
+            )
+
+            # Call OpenAI Vision API
+            api_start_time = time.time()
+            response = await self._client.chat.completions.create(
+                model=self._model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": vision_prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:{mime_type};base64,{base64_image}",
+                                    "detail": settings.OPENAI_VISION_DETAIL,
+                                },
+                            },
+                        ],
+                    },
+                ],
+                max_tokens=self._max_tokens,
+                temperature=self._temperature,
+                response_format={"type": "json_object"},
+            )
+            api_time = time.time() - api_start_time
+
+            # Extract content
+            content = response.choices[0].message.content
+            tokens_used = response.usage.total_tokens if response.usage else 0
+
+            logger.info(
+                f"🖼️ [VISION] OpenAI Vision API call completed in {api_time:.2f} seconds "
+                f"(tokens: {tokens_used}, model: {self._model})"
+            )
+
+            # Check if content is None
+            if content is None:
+                logger.error("OpenAI Vision returned empty content")
+                raise OpenAIInvalidResponseError("OpenAI Vision returned empty content")
+
+            # Parse JSON
+            json_start_time = time.time()
+            try:
+                parsed_data = json.loads(content)
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f"Failed to parse OpenAI Vision response as JSON: {str(e)}"
+                )
+                raise OpenAIInvalidResponseError(
+                    f"OpenAI Vision returned invalid JSON: {str(e)}"
+                )
+            json_time = time.time() - json_start_time
+
+            logger.info(f"🖼️ [VISION] JSON parsing completed in {json_time:.3f} seconds")
+
+            # Validate with Pydantic based on parse mode
+            validation_start = time.time()
+            try:
+                if parse_mode == "basic":
+                    validated_data = BasicParsedCVData(**parsed_data)
+                    logger.info(
+                        "✅ [VISION] Response validated with BasicParsedCVData schema"
+                    )
+                else:
+                    validated_data = ParsedCVData(**parsed_data)
+                    logger.info(
+                        "✅ [VISION] Response validated with ParsedCVData schema"
+                    )
+
+                # Convert back to dict for storage
+                parsed_data = validated_data.model_dump(exclude_none=False)
+
+            except PydanticValidationError as e:
+                logger.warning(
+                    f"⚠️ [VISION] Pydantic validation failed, using partial data: {str(e)}"
+                )
+                error_details = e.errors()
+                logger.warning(
+                    f"⚠️ [VISION] Validation errors: {json.dumps(error_details, indent=2)}"
+                )
+
+            validation_time = time.time() - validation_start
+            logger.info(
+                f"🔍 [VISION] Pydantic validation completed in {validation_time:.3f} seconds"
+            )
+
+            # Add metadata
+            parsed_data["_metadata"] = {
+                "model": self._model,
+                "tokens_used": tokens_used,
+                "api_time": round(api_time, 2),
+                "json_parse_time": round(json_time, 3),
+                "validation_time": round(validation_time, 3),
+                "parse_mode": parse_mode,
+                "input_type": "vision",
+                "mime_type": mime_type,
+            }
+
+            return parsed_data
+
+        except RateLimitError as e:
+            logger.error(f"OpenAI Vision rate limit exceeded: {str(e)}")
+            raise OpenAIRateLimitError(
+                "OpenAI rate limit exceeded. Please try again later."
+            )
+        except OpenAISDKError as e:
+            logger.error(f"OpenAI Vision API error: {str(e)}")
+            raise OpenAIError(f"OpenAI Vision API error: {str(e)}")
+        except (OpenAIInvalidResponseError, OpenAIRateLimitError):
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during OpenAI Vision call: {str(e)}")
+            raise OpenAIError(f"Failed to parse CV from image: {str(e)}")
 
     async def extract_entities(
         self, text: str, entity_types: Optional[list] = None

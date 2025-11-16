@@ -333,21 +333,39 @@ class ParserService:
                 file_content, file_name
             )
             extracted_text = extraction_result["content"]
+            is_image = extraction_result.get("is_image", False)
+            mime_type = extraction_result["mime_type"]
             file_time = time.time() - file_start
 
             logger.info(
-                f"📄 [BACKGROUND] File extraction completed in {file_time:.2f}s"
+                f"📄 [BACKGROUND] File extraction completed in {file_time:.2f}s "
+                f"({'IMAGE format' if is_image else 'TEXT format'})"
             )
 
-            # Validate extracted text
-            if not extracted_text or len(extracted_text.strip()) < 10:
-                raise ValidationError("Extracted text is too short to parse")
-
-            # Parse with OpenAI
+            # Parse based on file type
             openai_start = time.time()
-            parsed_result = await self.openai_service.parse_cv(
-                extracted_text, parse_mode=parse_mode
-            )
+
+            if is_image:
+                # Use Vision API for images
+                logger.info(f"🖼️ [BACKGROUND] Using Vision API for image file")
+                raw_bytes = extraction_result.get("raw_bytes")
+                if not raw_bytes:
+                    raise ValidationError("Image bytes not available for Vision API")
+
+                parsed_result = await self.openai_service.parse_cv_from_image(
+                    image_content=raw_bytes, mime_type=mime_type, parse_mode=parse_mode
+                )
+                extracted_text = f"[Image CV - {mime_type}]"  # Placeholder for DB
+            else:
+                # Use text API for text-based files
+                # Validate extracted text
+                if not extracted_text or len(extracted_text.strip()) < 10:
+                    raise ValidationError("Extracted text is too short to parse")
+
+                parsed_result = await self.openai_service.parse_cv(
+                    extracted_text, parse_mode=parse_mode
+                )
+
             openai_time = time.time() - openai_start
 
             logger.info(
