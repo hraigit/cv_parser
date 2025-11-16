@@ -94,9 +94,9 @@ site/
 # Backup files
 *.bak
 *.backup
-*~
-
 # Temporary files
 *.tmp
 *.temp
 .cache/
+**/__pycache__/
+__pycache__

@@ -1,4 +1,5 @@
 """Parser schemas for CV/Entity extraction."""
+
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
@@ -11,7 +12,7 @@ from app.schemas.common import TimestampMixin
 # Request Schemas
 class ParseTextRequest(BaseModel):
     """Request model for parsing text input."""
-    
+
     user_id: str = Field(..., min_length=1, description="User identifier")
     session_id: str = Field(..., min_length=1, description="Session identifier")
     text: str = Field(..., min_length=10, description="Text to parse")
@@ -19,15 +20,19 @@ class ParseTextRequest(BaseModel):
 
 class ParseFreeTextRequest(BaseModel):
     """Request model for parsing free-form text where candidate describes themselves."""
-    
+
     user_id: str = Field(..., min_length=1, description="User identifier")
     session_id: str = Field(..., min_length=1, description="Session identifier")
-    free_text: str = Field(..., min_length=20, description="Free-form text where candidate describes themselves")
+    free_text: str = Field(
+        ...,
+        min_length=20,
+        description="Free-form text where candidate describes themselves",
+    )
 
 
 class ParseFileRequest(BaseModel):
     """Request model for parsing file input (form data)."""
-    
+
     user_id: str = Field(..., min_length=1, description="User identifier")
     session_id: str = Field(..., min_length=1, description="Session identifier")
 
@@ -35,6 +40,7 @@ class ParseFileRequest(BaseModel):
 # CV Structure Schemas (based on your prompt)
 class DateOfBirth(BaseModel):
     """Date of birth model."""
+
     year: Optional[str] = None
     month: Optional[str] = None
     day: Optional[str] = None
@@ -42,6 +48,7 @@ class DateOfBirth(BaseModel):
 
 class ProfileBasics(BaseModel):
     """Basic profile information."""
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     gender: Optional[str] = None
@@ -59,6 +66,7 @@ class ProfileBasics(BaseModel):
 
 class Language(BaseModel):
     """Language proficiency model."""
+
     name: Optional[str] = None
     iso_code: Optional[str] = None
     fluency: Optional[str] = None
@@ -66,6 +74,7 @@ class Language(BaseModel):
 
 class Education(BaseModel):
     """Education model."""
+
     start_year: Optional[str] = None
     is_current: bool = False
     end_year: Optional[str] = None
@@ -75,6 +84,7 @@ class Education(BaseModel):
 
 class TrainingCertification(BaseModel):
     """Training and certification model."""
+
     year: Optional[str] = None
     issuing_organization: Optional[str] = None
     description: Optional[str] = None
@@ -82,12 +92,14 @@ class TrainingCertification(BaseModel):
 
 class WorkDate(BaseModel):
     """Work experience date model."""
+
     year: Optional[str] = None
     month: Optional[str] = None
 
 
 class ProfessionalExperience(BaseModel):
     """Professional experience model."""
+
     start_date: Optional[WorkDate] = None
     is_current: bool = False
     end_date: Optional[WorkDate] = None
@@ -100,6 +112,7 @@ class ProfessionalExperience(BaseModel):
 
 class Award(BaseModel):
     """Award model."""
+
     year: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
@@ -107,6 +120,7 @@ class Award(BaseModel):
 
 class Reference(BaseModel):
     """Reference model."""
+
     full_name: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[str] = None
@@ -117,10 +131,13 @@ class Reference(BaseModel):
 
 class CVProfile(BaseModel):
     """CV profile model."""
+
     basics: ProfileBasics
     languages: List[Language] = Field(default_factory=list)
     educations: List[Education] = Field(default_factory=list)
-    trainings_and_certifications: List[TrainingCertification] = Field(default_factory=list)
+    trainings_and_certifications: List[TrainingCertification] = Field(
+        default_factory=list
+    )
     professional_experiences: List[ProfessionalExperience] = Field(default_factory=list)
     awards: List[Award] = Field(default_factory=list)
     references: List[Reference] = Field(default_factory=list)
@@ -128,6 +145,7 @@ class CVProfile(BaseModel):
 
 class ParsedCVData(BaseModel):
     """Complete parsed CV data structure."""
+
     profile: CVProfile
     cv_language: Optional[str] = None
 
@@ -135,25 +153,27 @@ class ParsedCVData(BaseModel):
 # Response Schemas
 class ParseResponse(TimestampMixin):
     """Response model for parse operations."""
-    
+
     id: UUID = Field(..., description="Parse result ID")
     user_id: str = Field(..., description="User identifier")
     session_id: str = Field(..., description="Session identifier")
     parsed_data: ParsedCVData = Field(..., description="Parsed CV data")
     cv_language: Optional[str] = Field(None, description="Detected CV language")
     file_name: Optional[str] = Field(None, description="Original file name")
-    processing_time_seconds: Optional[float] = Field(None, description="Processing time")
+    processing_time_seconds: Optional[float] = Field(
+        None, description="Processing time"
+    )
     status: str = Field(..., description="Processing status")
-    
+
 
 class ParseHistoryResponse(BaseModel):
     """Response model for parse history."""
-    
+
     items: List[ParseResponse]
     total: int
     page: int
     page_size: int
-    
+
     @property
     def total_pages(self) -> int:
         """Calculate total pages."""
@@ -162,13 +182,48 @@ class ParseHistoryResponse(BaseModel):
 
 class ParseStatusResponse(BaseModel):
     """Response for parse status check."""
-    
+
     id: UUID
     status: str
     user_id: str
     session_id: str
     created_at: datetime
     error_message: Optional[str] = None
-    
+
+    class Config:
+        from_attributes = True
+
+
+class AsyncJobResponse(BaseModel):
+    """Response model for async job creation."""
+
+    job_id: UUID = Field(..., description="Job identifier for tracking")
+    status: str = Field(default="processing", description="Initial job status")
+    message: str = Field(
+        default="Job created and processing in background", description="Status message"
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class JobStatusResponse(BaseModel):
+    """Response model for job status polling."""
+
+    job_id: UUID = Field(..., description="Job identifier")
+    status: str = Field(
+        ..., description="Current job status: processing, success, failed"
+    )
+    user_id: str = Field(..., description="User identifier")
+    session_id: str = Field(..., description="Session identifier")
+    file_name: Optional[str] = Field(None, description="File name if applicable")
+    cv_language: Optional[str] = Field(None, description="Detected CV language")
+    processing_time_seconds: Optional[float] = Field(
+        None, description="Processing time if completed"
+    )
+    error_message: Optional[str] = Field(None, description="Error message if failed")
+    created_at: datetime = Field(..., description="Job creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
+
     class Config:
         from_attributes = True
