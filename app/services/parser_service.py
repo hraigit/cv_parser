@@ -1,7 +1,7 @@
 """Parser service - business logic layer."""
 
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -101,8 +101,8 @@ class ParserService:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get parse result {record_id}: {str(e)}")
-            raise ParserError(f"Failed to retrieve parse result: {str(e)}")
+            logger.error(f"Failed to retrieve parse result: {str(e)}")
+            raise ParserError(f"Failed to retrieve parse result: {str(e)}") from e
 
     async def create_placeholder_job(
         self,
@@ -153,8 +153,8 @@ class ParserService:
         candidate_id: UUID,
         file_content: bytes,
         file_name: str,
-        file_content_type: str,
-        parse_mode: str = "advanced",
+        file_content_type: str,  # noqa: ARG002 - kept for future use
+        parse_mode: Literal["basic", "advanced"] = "advanced",
     ):
         """Process CV file in background.
 
@@ -291,7 +291,7 @@ class ParserService:
                     )
 
                     # Update processing time even on failure
-                record = await self.repository.get_by_id(session, candidate_id)
+                    record = await self.repository.get_by_id(session, candidate_id)
                 if record:
                     record.processing_time_seconds = processing_time
                     await session.flush()
@@ -303,7 +303,7 @@ class ParserService:
         self,
         candidate_id: UUID,
         text: str,
-        parse_mode: str = "advanced",
+        parse_mode: Literal["basic", "advanced"] = "advanced",
     ):
         """Process CV text in background.
 
@@ -381,95 +381,6 @@ class ParserService:
                     )
 
                     record = await self.repository.get_by_id(session, candidate_id)
-                    if record:
-                        record.processing_time_seconds = processing_time
-                        await session.flush()
-
-            except Exception as db_error:
-                logger.error(f"Failed to update error status: {str(db_error)}")
-
-    async def process_text_background(
-        self,
-        candidate_id: UUID,
-        text: str,
-        parse_mode: str = "advanced",
-    ):
-        """Process CV text in background.
-
-        Args:
-            candidate_id: Candidate identifier (used as job ID)
-            text: CV text content
-            parse_mode: Parse mode ('basic' or 'advanced')
-        """
-        start_time = time.time()
-        db_manager = get_db_manager()
-
-        try:
-            logger.info(
-                f"🚀 [BACKGROUND] Starting text parsing for candidate: {candidate_id}, "
-                f"text length: {len(text)}, mode: {parse_mode}"
-            )
-
-            # Validate input
-            if not text or len(text.strip()) < 10:
-                raise ValidationError("Text is too short to parse")
-
-            # Parse with OpenAI
-            openai_start = time.time()
-            parsed_result = await self.openai_service.parse_cv(
-                text, parse_mode=parse_mode
-            )
-            openai_time = time.time() - openai_start
-
-            logger.info(
-                f"⏱️ [BACKGROUND] OpenAI parsing completed in {openai_time:.2f}s"
-            )
-
-            # Extract metadata
-            metadata = parsed_result.pop("_metadata", {})
-
-            # Enrich parsed data with calculated fields
-            parsed_result = self._enrich_parsed_data(parsed_result)
-
-            cv_language = parsed_result.get("cv_language")
-            processing_time = time.time() - start_time
-
-            # Update database with success
-            async with db_manager.get_session() as session:
-                await self.repository.update_status(
-                    session=session, record_id=candidate_id, status="success"
-                )
-
-                record = await self.repository.get_by_id(session, candidate_id)
-                if record:
-                    record.parsed_data = parsed_result
-                    record.input_text = text[:8000]
-                    record.cv_language = cv_language
-                    record.processing_time_seconds = processing_time
-                    record.openai_model = metadata.get("model")
-                    record.tokens_used = metadata.get("tokens_used")
-
-                    await session.flush()
-
-            logger.info(
-                f"✅ [BACKGROUND] Successfully completed candidate: {candidate_id} | "
-                f"Total: {processing_time:.2f}s, OpenAI: {openai_time:.2f}s"
-            )
-
-        except Exception as e:
-            processing_time = time.time() - start_time
-            logger.error(f"❌ [BACKGROUND] Failed candidate {candidate_id}: {str(e)}")
-
-            try:
-                async with db_manager.get_session() as session:
-                    await self.repository.update_status(
-                        session=session,
-                        record_id=candidate_id,
-                        status="failed",
-                        error_message=str(e),
-                    )
-
-                    record = await self.repository.get_by_id(session, job_id)
                     if record:
                         record.processing_time_seconds = processing_time
                         await session.flush()

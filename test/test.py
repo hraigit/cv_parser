@@ -1,7 +1,6 @@
 """Simple test script for CV parser API."""
 
 import asyncio
-import time
 import uuid
 from pathlib import Path
 
@@ -48,7 +47,7 @@ async def test_pdf_parsing():
             profile = result.get("parsed_data", {}).get("profile", {})
             basics = profile.get("basics", {})
 
-            print(f"✓ PDF Parsed Successfully!")
+            print("✓ PDF Parsed Successfully!")
             print(f"  Profession: {basics.get('profession', 'N/A')}")
             print(
                 f"  Total Experience: {basics.get('total_experience_in_years', 0)} years"
@@ -105,7 +104,7 @@ async def test_image_parsing():
             profile = result.get("parsed_data", {}).get("profile", {})
             basics = profile.get("basics", {})
 
-            print(f"✓ Image Parsed Successfully!")
+            print("✓ Image Parsed Successfully!")
             print(f"  Profession: {basics.get('profession', 'N/A')}")
             print(
                 f"  Total Experience: {basics.get('total_experience_in_years', 0)} years"
@@ -116,13 +115,15 @@ async def test_image_parsing():
             )
             print(f"  Education: {len(profile.get('educations', []))} degrees")
             print(
-                f"  Skills: {', '.join(basics.get('skills', [])[:3])}..."
+                "  Skills: {}".format(", ".join(basics.get("skills", [])[:3]) + "...")
                 if basics.get("skills")
                 else "  Skills: N/A"
             )
         else:
             print(
-                f"✗ Image Parsing failed: {status_data.get('error_message', 'Unknown error')}"
+                "✗ Image Parsing failed: {}".format(
+                    status_data.get("error_message", "Unknown error")
+                )
             )
 
 
@@ -134,28 +135,28 @@ async def test_text_parsing():
     cv_text = """
     John Doe
     Software Engineer
-    
+
     PROFILE
     Experienced software engineer with 5 years of expertise in Python and web development.
     Passionate about building scalable applications and clean code.
-    
+
     EXPERIENCE
     Senior Software Engineer - Tech Corp (2020-2025)
     - Led development of microservices architecture
     - Improved system performance by 40%
     - Mentored junior developers
-    
+
     Software Engineer - StartupXYZ (2018-2020)
     - Built RESTful APIs using FastAPI
     - Implemented CI/CD pipelines
-    
+
     EDUCATION
     Bachelor of Science in Computer Science
     University of Technology, 2018
-    
+
     SKILLS
     Python, FastAPI, PostgreSQL, Docker, AWS
-    
+
     LANGUAGES
     English (Native), Spanish (Professional)
     """
@@ -191,7 +192,7 @@ async def test_text_parsing():
             profile = result.get("parsed_data", {}).get("profile", {})
             basics = profile.get("basics", {})
 
-            print(f"✓ Text Parsed Successfully!")
+            print("✓ Text Parsed Successfully!")
             print(f"  Profession: {basics.get('profession', 'N/A')}")
             print(
                 f"  Total Experience: {basics.get('total_experience_in_years', 0)} years"
@@ -202,13 +203,15 @@ async def test_text_parsing():
             )
             print(f"  Education: {len(profile.get('educations', []))} degrees")
             print(
-                f"  Skills: {', '.join(basics.get('skills', [])[:3])}..."
+                "  Skills: {}".format(", ".join(basics.get("skills", [])[:3]) + "...")
                 if basics.get("skills")
                 else "  Skills: N/A"
             )
         else:
             print(
-                f"✗ Text Parsing failed: {status_data.get('error_message', 'Unknown error')}"
+                "✗ Text Parsing failed: {}".format(
+                    status_data.get("error_message", "Unknown error")
+                )
             )
 
 

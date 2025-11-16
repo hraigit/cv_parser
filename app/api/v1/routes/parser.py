@@ -1,6 +1,5 @@
 """Parser API routes."""
 
-from typing import Optional
 from uuid import UUID
 
 from fastapi import (
@@ -10,7 +9,6 @@ from fastapi import (
     File,
     Form,
     HTTPException,
-    Query,
     UploadFile,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +17,7 @@ from app.core.database import get_db
 from app.core.logging import logger
 from app.exceptions.custom_exceptions import ValidationError
 from app.schemas.parser import AsyncJobResponse, JobStatusResponse
+from app.services.file_service import get_file_service
 from app.services.parser_service import get_parser_service
 
 router = APIRouter(prefix="/parser", tags=["Parser"])
@@ -64,7 +63,10 @@ async def get_result(candidate_id: UUID, db: AsyncSession = Depends(get_db)):
     "/supported-formats",
     response_model=dict,
     summary="Get supported formats",
-    description="Get comprehensive list of supported file formats and MIME types for CV parsing. Includes PDF, Word, HTML, TXT, RTF, CSV, and XML formats.",
+    description=(
+        "Get comprehensive list of supported file formats and MIME types for CV parsing. "
+        "Includes PDF, Word, HTML, TXT, RTF, CSV, and XML formats."
+    ),
 )
 async def get_supported_formats():
     """Get supported file formats.
@@ -72,8 +74,6 @@ async def get_supported_formats():
     Returns:
         Comprehensive list of supported MIME types with descriptions
     """
-    from app.services.file_service import get_file_service
-
     file_service = get_file_service()
     formats = file_service.get_supported_formats()
 
@@ -84,7 +84,9 @@ async def get_supported_formats():
         "text/html": "HTML files (.html, .htm)",
         "application/xhtml+xml": "XHTML files (.xhtml)",
         "application/msword": "Legacy Word documents (.doc)",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "Modern Word documents (.docx)",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": (
+            "Modern Word documents (.docx)"
+        ),
         "text/rtf": "Rich Text Format (.rtf)",
         "application/rtf": "Rich Text Format (.rtf)",
         "text/csv": "Comma-separated values (.csv)",
@@ -147,8 +149,6 @@ async def get_cache_stats():
     Returns:
         Cache statistics
     """
-    from app.services.file_service import get_file_service
-
     file_service = get_file_service()
     stats = file_service.get_cache_stats()
 
@@ -319,17 +319,20 @@ async def parse_text_async(
 
     except ValidationError as e:
         logger.warning(f"Validation error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Unexpected error in parse_text_async: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get(
     "/status/{candidate_id}",
     response_model=JobStatusResponse,
     summary="Get job status by candidate ID",
-    description="Check the status of an async parsing job. Returns 'processing', 'success', or 'failed'.",
+    description=(
+        "Check the status of an async parsing job. "
+        "Returns 'processing', 'success', or 'failed'."
+    ),
 )
 async def get_job_status(candidate_id: UUID, db: AsyncSession = Depends(get_db)):
     """Get status of async parsing job.
@@ -367,4 +370,4 @@ async def get_job_status(candidate_id: UUID, db: AsyncSession = Depends(get_db))
         raise
     except Exception as e:
         logger.error(f"Error getting job status: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e

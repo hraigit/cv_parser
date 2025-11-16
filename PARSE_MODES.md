@@ -39,6 +39,8 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
   -F "candidate_id=550e8400-e29b-41d4-a716-446655440000" \
   -F "file=@cv.pdf" \
   -F "parse_mode=basic"
+
+# Response: {"candidate_id": "550e8400-...", "status": "processing"}
 ```
 
 ## 2. Advanced Mode
@@ -74,6 +76,8 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
 curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
   -F "candidate_id=550e8400-e29b-41d4-a716-446655440000" \
   -F "file=@cv.pdf"
+
+# Response: {"candidate_id": "550e8400-...", "status": "processing"}
 ```
 
 ## Comparison
@@ -107,6 +111,7 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
 ```json
 {
   "id": "uuid",
+  "candidate_id": "550e8400-e29b-41d4-a716-446655440000",
   "parsed_data": {
     "profile": {
       "basics": {
@@ -124,17 +129,19 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
       ]
     }
   },
-  "parse_mode": "basic"
+  "status": "success",
+  "cv_language": "EN"
 }
 ```
 
-**Note:** Personal information (first_name, last_name, emails, phone_numbers) is NOT parsed due to KVKK/GDPR compliance.
+**Note:** Personal information (full_name, email, phone) is NOT parsed due to KVKK/GDPR compliance.
 
 ### Advanced Mode Response
 
 ```json
 {
   "id": "uuid",
+  "candidate_id": "550e8400-e29b-41d4-a716-446655440000",
   "parsed_data": {
     "profile": {
       "basics": {
@@ -143,27 +150,32 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file-async" \
         "summary": "Software Engineer with 10 years of experience. Expert in Python, Java, and microservices architecture. Experience managing a team of 5 developers. Deep knowledge in cloud technologies and DevOps practices.",
         "has_driving_license": true,
         "skills": [
-          {
-            "name": "Python",
-            "proficiency": "Expert",
-            "years_of_experience": 10
-          }
+          "Python",
+          "Java",
+          "Docker",
+          "Kubernetes",
+          "AWS"
         ]
       },
       "professional_experiences": [
         {
           "company": "ABC Tech",
           "title": "Senior Software Engineer",
-          "description": "Microservices architecture design and implementation. REST API development. Deployment with Docker and Kubernetes. Technical leadership of 5-person developer team. Scalable systems design on AWS."  // FILLED - ADVANCED MODE
+          "description": "Microservices architecture design and implementation. REST API development. Deployment with Docker and Kubernetes. Technical leadership of 5-person developer team. Scalable systems design on AWS.",  // FILLED - ADVANCED MODE
+          "start_date": {"year": "2020", "month": "01"},
+          "end_date": {"year": "", "month": ""},
+          "is_current": true,
+          "duration_in_months": 48
         }
       ]
     }
   },
-  "parse_mode": "advanced"
+  "status": "success",
+  "cv_language": "EN"
 }
 ```
 
-**Note:** Personal information (first_name, last_name, emails, phone_numbers, date_of_birth, address) is NOT parsed due to KVKK/GDPR compliance.
+**Note:** Personal information (full_name, email, phone, date_of_birth, address) is NOT parsed due to KVKK/GDPR compliance.
 
 ## When to Use Each Mode?
 

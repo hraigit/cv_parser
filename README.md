@@ -273,6 +273,40 @@ LOG_LEVEL=INFO
 - **Alembic** - Database migrations
 - **Docker** - Containerization
 
+## 🧪 Testing
+
+### Quick Test Script
+
+A simple test script is provided to validate all parsing modes:
+
+```bash
+python test/test.py
+```
+
+This script tests:
+
+- ✅ PDF file parsing
+- ✅ Image file parsing (Vision API)
+- ✅ Text-based CV parsing
+
+Each test:
+
+1. Uploads CV with a unique `candidate_id`
+2. Polls status endpoint until completion
+3. Retrieves and displays parsed results
+
+**Example Output:**
+
+```text
+✓ PDF Parsed Successfully!
+  Profession: Senior AI Engineer / Data Scientist
+  Total Experience: 6.8 years
+  Language: EN
+  Experience: 4 positions
+  Education: 2 degrees
+  Skills: Data Science & Machine Learning, LLMs & Agentic AI, Data Engineering...
+```
+
 ## 📝 Development
 
 ```bash
@@ -285,8 +319,8 @@ alembic revision -m "description"
 # Apply migrations
 alembic upgrade head
 
-# Run tests
-pytest tests/ -v
+# Run quick test
+python test/test.py
 
 # Run with auto-reload
 python run.py

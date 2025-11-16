@@ -1,9 +1,9 @@
 """Repository for parser database operations."""
 
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger

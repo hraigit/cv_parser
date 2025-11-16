@@ -1,4 +1,5 @@
 """FastAPI application main entry point."""
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -49,7 +50,7 @@ app = FastAPI(
     description="Production-ready CV/Entity Parser API",
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -71,8 +72,8 @@ async def custom_exception_handler(request: Request, exc: BaseAPIException):
         extra={
             "path": request.url.path,
             "method": request.method,
-            "error_code": exc.error_code
-        }
+            "error_code": exc.error_code,
+        },
     )
 
     return JSONResponse(
@@ -80,8 +81,8 @@ async def custom_exception_handler(request: Request, exc: BaseAPIException):
         content={
             "error_code": exc.error_code,
             "message": exc.message,
-            "path": request.url.path
-        }
+            "path": request.url.path,
+        },
     )
 
 
@@ -90,10 +91,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """Handle Pydantic validation errors."""
     logger.warning(
         f"Validation error: {str(exc)}",
-        extra={
-            "path": request.url.path,
-            "method": request.method
-        }
+        extra={"path": request.url.path, "method": request.method},
     )
 
     return JSONResponse(
@@ -101,8 +99,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content={
             "error_code": "VALIDATION_ERROR",
             "message": "Request validation failed",
-            "details": exc.errors()
-        }
+            "details": exc.errors(),
+        },
     )
 
 
@@ -111,10 +109,7 @@ async def general_exception_handler(request: Request, exc: Exception):
     """Handle unexpected exceptions."""
     logger.exception(
         f"Unhandled exception: {str(exc)}",
-        extra={
-            "path": request.url.path,
-            "method": request.method
-        }
+        extra={"path": request.url.path, "method": request.method},
     )
 
     return JSONResponse(
@@ -122,8 +117,8 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={
             "error_code": "INTERNAL_SERVER_ERROR",
             "message": "An unexpected error occurred",
-            "detail": str(exc) if settings.DEBUG else None
-        }
+            "detail": str(exc) if settings.DEBUG else None,
+        },
     )
 
 
@@ -141,8 +136,8 @@ async def log_requests(request: Request, call_next):
         extra={
             "method": request.method,
             "path": request.url.path,
-            "client": request.client.host if request.client else None
-        }
+            "client": request.client.host if request.client else None,
+        },
     )
 
     response = await call_next(request)
@@ -152,8 +147,8 @@ async def log_requests(request: Request, call_next):
         extra={
             "method": request.method,
             "path": request.url.path,
-            "status_code": response.status_code
-        }
+            "status_code": response.status_code,
+        },
     )
 
     return response
@@ -167,5 +162,5 @@ if __name__ == "__main__":
         host=settings.HOST,
         port=settings.PORT,
         reload=settings.DEBUG,
-        log_level=settings.LOG_LEVEL.lower()
+        log_level=settings.LOG_LEVEL.lower(),
     )

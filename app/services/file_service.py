@@ -174,7 +174,7 @@ class FileService:
 
         except Exception as e:
             logger.error(f"Failed to extract text: {str(e)}")
-            raise FileProcessingError(f"Failed to extract text: {str(e)}")
+            raise FileProcessingError(f"Failed to extract text: {str(e)}") from e
 
     def get_supported_formats(self) -> list:
         """Get list of supported file formats.
