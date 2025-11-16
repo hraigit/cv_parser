@@ -131,7 +131,7 @@ class FileService:
                 f"Failed to process file {file.filename} "
                 f"after {processing_time:.2f}s: {str(e)}"
             )
-            raise FileProcessingError(f"Failed to process file: {str(e)}")
+            raise FileProcessingError(f"Failed to process file: {str(e)}") from e
 
     async def extract_text_from_content(
         self, content: bytes, filename: str

@@ -15,10 +15,13 @@ from app.exceptions.custom_exceptions import BaseAPIException
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Application lifespan manager.
 
     Handles startup and shutdown events.
+
+    Args:
+        _app: FastAPI application instance (unused in function body)
     """
     # Startup
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")

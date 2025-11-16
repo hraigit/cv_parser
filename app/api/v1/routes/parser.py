@@ -223,7 +223,6 @@ async def parse_file_async(
             candidate_id=candidate_id,
             file_content=file_content,
             file_name=file_name,
-            file_content_type=file_content_type,
             parse_mode=parse_mode,
         )
 

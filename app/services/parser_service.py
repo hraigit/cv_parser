@@ -146,14 +146,13 @@ class ParserService:
 
         except Exception as e:
             logger.error(f"Failed to create placeholder job: {str(e)}")
-            raise ParserError(f"Failed to create job: {str(e)}")
+            raise ParserError(f"Failed to create job: {str(e)}") from e
 
     async def process_file_background(
         self,
         candidate_id: UUID,
         file_content: bytes,
         file_name: str,
-        file_content_type: str,  # noqa: ARG002 - kept for future use
         parse_mode: Literal["basic", "advanced"] = "advanced",
     ):
         """Process CV file in background.
@@ -164,7 +163,6 @@ class ParserService:
             candidate_id: Candidate identifier (used as job ID)
             file_content: File content as bytes
             file_name: Original filename
-            file_content_type: File MIME type
             parse_mode: Parse mode (basic/advanced)
         """
         start_time = time.time()

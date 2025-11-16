@@ -1,7 +1,71 @@
 """Experience calculation utilities."""
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
+
+# Month name to number mapping (supports both full and abbreviated names)
+MONTH_MAPPING = {
+    # Full names
+    "january": 1,
+    "february": 2,
+    "march": 3,
+    "april": 4,
+    "may": 5,
+    "june": 6,
+    "july": 7,
+    "august": 8,
+    "september": 9,
+    "october": 10,
+    "november": 11,
+    "december": 12,
+    # Abbreviated names
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+}
+
+
+def parse_month(month_value: Union[str, int, None]) -> int:
+    """Parse month value to integer.
+
+    Args:
+        month_value: Month as string (name/number), integer, or None
+
+    Returns:
+        Month number (1-12), or 1 if cannot parse
+    """
+    if not month_value:
+        return 1
+
+    # If already an integer
+    if isinstance(month_value, int):
+        return max(1, min(12, month_value))
+
+    # If string, try to parse
+    month_str = str(month_value).strip()
+
+    if not month_str:
+        return 1
+
+    # Try as number first
+    try:
+        month_num = int(month_str)
+        return max(1, min(12, month_num))
+    except ValueError:
+        pass
+
+    # Try as month name
+    month_lower = month_str.lower()
+    return MONTH_MAPPING.get(month_lower, 1)
 
 
 def calculate_duration_in_months(
@@ -12,8 +76,8 @@ def calculate_duration_in_months(
     """Calculate duration between two dates in months.
 
     Args:
-        start_date: Dictionary with 'year' and 'month' keys
-        end_date: Dictionary with 'year' and 'month' keys
+        start_date: Dictionary with 'year' and 'month' keys (month can be name or number)
+        end_date: Dictionary with 'year' and 'month' keys (month can be name or number)
         is_current: Whether this is an ongoing experience
 
     Returns:
@@ -23,8 +87,14 @@ def calculate_duration_in_months(
         return 0
 
     try:
-        start_year = int(start_date.get("year", 0))
-        start_month = int(start_date.get("month", 1))
+        # Parse start year
+        start_year_str = str(start_date.get("year", "")).strip()
+        if not start_year_str:
+            return 0
+        start_year = int(start_year_str)
+
+        # Parse start month (supports text like "May" or numbers)
+        start_month = parse_month(start_date.get("month"))
 
         if is_current:
             # Use current date as end date
@@ -32,8 +102,19 @@ def calculate_duration_in_months(
             end_year = now.year
             end_month = now.month
         elif end_date and end_date.get("year"):
-            end_year = int(end_date.get("year", 0))
-            end_month = int(end_date.get("month", 12))
+            # Parse end year
+            end_year_str = str(end_date.get("year", "")).strip()
+            if not end_year_str:
+                return 0
+            end_year = int(end_year_str)
+
+            # Parse end month (supports text like "May" or numbers)
+            # Default to December if not specified
+            end_month_value = end_date.get("month")
+            if not end_month_value or str(end_month_value).strip() == "":
+                end_month = 12
+            else:
+                end_month = parse_month(end_month_value)
         else:
             return 0
 
