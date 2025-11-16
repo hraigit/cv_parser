@@ -2,27 +2,76 @@
 
 Production-ready CV/Resume Parser API powered by FastAPI, OpenAI (GPT-4o-mini for Vision, GPT-3.5-turbo for Text), and PostgreSQL.
 
-## 🎯 Quick Guide - API Flow
+## 🎯 Quick Guide
+
+### 📊 API Akış Diyagramı
 
 ```mermaid
-graph LR
-    A[📄 Text CV] -->|POST /parse-text-async| B[🔄 job_id]
-    C[📎 File CV<br/>PDF/DOCX/Image] -->|POST /parse-file-async| B
-    B -->|GET /job/:job_id| D{Status?}
-    D -->|processing| D
-    D -->|success| E[✅ GET /result/:job_id<br/>Parsed CV Data]
-    D -->|failed| F[❌ Error Message]
-    G[👤 User] -->|GET /history/:user_id| H[📋 All CVs List]
+flowchart TD
+    A[📄 Text CV] -->|POST /parse-text-async| C[job_id]
+    B[📎 File CV<br/>PDF/DOCX/Image] -->|POST /parse-file-async| C
     
-    style A fill:#e1f5ff
-    style C fill:#e1f5ff
-    style B fill:#fff4e6
-    style E fill:#e8f5e9
-    style F fill:#ffebee
+    C -->|Yol 1: Job ile takip| D[GET /job/job_id]
+    D --> E{Status?}
+    E -->|processing| D
+    E -->|success| F[GET /result/job_id]
+    E -->|failed| G[❌ Error]
+    
+    C -->|Yol 2: Direkt son CV| H[GET /latest/user_id]
+    H --> I[✅ En güncel CV<br/>created_at DESC]
+    
+    J[👤 User] -->|Tüm geçmiş| K[GET /history/user_id]
+    K --> L[📋 Paginated Liste]
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style F fill:#e8f5e9
+    style G fill:#ffebee
     style H fill:#f3e5f5
+    style I fill:#e8f5e9
+    style L fill:#f3e5f5
 ```
 
-### 🚀 Usage Examples
+### 📤 CV Gönderme (Upload)
+
+```bash
+# Text olarak gönder
+POST /api/v1/parser/parse-text-async
+→ job_id döner
+
+# Dosya olarak gönder (PDF/DOCX/Image)
+POST /api/v1/parser/parse-file-async
+→ job_id döner
+```
+
+### 🔍 Sonuç Alma (Retrieve)
+
+```bash
+# 1️⃣ Job durumunu kontrol et
+GET /api/v1/parser/job/{job_id}
+→ status: processing/success/failed
+
+# 2️⃣ Başarılıysa sonucu al
+GET /api/v1/parser/result/{job_id}
+→ Parsed CV verisi (JSON)
+
+# 3️⃣ Veya user'ın EN GÜNCEL CV'sini direkt al
+GET /api/v1/parser/latest/{user_id}
+→ En son parse edilen CV (created_at DESC)
+```
+
+### 📋 Geçmiş (History)
+
+```bash
+# User'ın tüm CV'lerini listele
+GET /api/v1/parser/history/{user_id}?page=1&page_size=10
+→ Paginated liste
+```
+
+---
+
+### 🚀 Detaylı Örnekler
 
 **1️⃣ Parse Text CV (Async)**
 ```bash
