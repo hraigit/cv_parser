@@ -326,7 +326,7 @@ class ParserService:
                 record = await self.repository.get_by_id(session, job_id)
                 if record:
                     record.parsed_data = parsed_result
-                    record.input_text = extracted_text[:5000]
+                    record.input_text = extracted_text[:8000]
                     record.file_mime_type = extraction_result["mime_type"]
                     record.stored_file_path = stored_file_path
                     record.cv_language = cv_language
@@ -420,7 +420,7 @@ class ParserService:
                 record = await self.repository.get_by_id(session, job_id)
                 if record:
                     record.parsed_data = parsed_result
-                    record.input_text = text[:5000]
+                    record.input_text = text[:8000]
                     record.cv_language = cv_language
                     record.processing_time_seconds = processing_time
                     record.openai_model = metadata.get("model")

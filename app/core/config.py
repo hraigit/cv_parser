@@ -34,7 +34,7 @@ class Settings(BaseSettings):
 
     # OpenAI
     OPENAI_API_KEY: str = Field(default="")
-    OPENAI_MODEL: str = Field(default="gpt-3.5-turbo")
+    OPENAI_MODEL: str = Field(default="gpt-5-mini")
     OPENAI_MAX_TOKENS: int = Field(default=3000)
     OPENAI_TEMPERATURE: float = Field(default=0.1)
 

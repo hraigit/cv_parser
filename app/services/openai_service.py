@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 from openai import AsyncOpenAI
 from openai import OpenAIError as OpenAISDKError
 from openai import RateLimitError
+from pydantic import ValidationError as PydanticValidationError
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -16,6 +17,7 @@ from app.exceptions.custom_exceptions import (
     OpenAIInvalidResponseError,
     OpenAIRateLimitError,
 )
+from app.schemas.parser import BasicParsedCVData, ParsedCVData
 
 # System prompt for ADVANCED CV parsing (KVKK/GDPR-compliant - no personal data)
 CV_PARSE_SYSTEM_PROMPT_ADVANCED = """SYSTEM: You are a precision-engineered CV Parser that ONLY outputs valid JSON. You must NEVER include any explanatory text, markdown, or non-JSON content in your response. Your sole purpose is to transform resume content into the following JSON structure while maintaining the source language (Turkish/English).
@@ -202,12 +204,50 @@ class OpenAIService:
                 f"🤖 [TIMING] JSON parsing completed in {json_time:.3f} seconds"
             )
 
+            # Validate with Pydantic based on parse mode
+            validation_start = time.time()
+            try:
+                if parse_mode == "basic":
+                    # Validate with BasicParsedCVData schema
+                    validated_data = BasicParsedCVData(**parsed_data)
+                    logger.info(
+                        "✅ [VALIDATION] OpenAI response validated with BasicParsedCVData schema"
+                    )
+                else:
+                    # Validate with full ParsedCVData schema
+                    validated_data = ParsedCVData(**parsed_data)
+                    logger.info(
+                        "✅ [VALIDATION] OpenAI response validated with ParsedCVData schema"
+                    )
+
+                # Convert back to dict for storage
+                parsed_data = validated_data.model_dump(exclude_none=False)
+
+            except PydanticValidationError as e:
+                # Log validation errors but don't fail - use best effort approach
+                logger.warning(
+                    f"⚠️ [VALIDATION] Pydantic validation failed, using partial data: {str(e)}"
+                )
+                # Try to extract what we can from the response
+                # Keep the original parsed_data but log the issues
+                error_details = e.errors()
+                logger.warning(
+                    f"⚠️ [VALIDATION] Validation errors: {json.dumps(error_details, indent=2)}"
+                )
+
+            validation_time = time.time() - validation_start
+            logger.info(
+                f"🔍 [TIMING] Pydantic validation completed in {validation_time:.3f} seconds"
+            )
+
             # Add metadata
             parsed_data["_metadata"] = {
                 "model": self._model,
                 "tokens_used": tokens_used,
                 "api_time": round(api_time, 2),
                 "json_parse_time": round(json_time, 3),
+                "validation_time": round(validation_time, 3),
+                "parse_mode": parse_mode,
             }
 
             return parsed_data
