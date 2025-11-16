@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from app.schemas.common import TimestampMixin
 
@@ -326,6 +326,8 @@ class AsyncJobResponse(BaseModel):
     )
 
     class Config:
+        """Pydantic config."""
+
         from_attributes = True
 
 
@@ -348,4 +350,6 @@ class JobStatusResponse(BaseModel):
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
 
     class Config:
+        """Pydantic config."""
+
         from_attributes = True

@@ -20,25 +20,25 @@ Base = declarative_base()
 
 class DatabaseManager:
     """Async-safe singleton database manager."""
-    
+
     _instance: Optional["DatabaseManager"] = None
     _lock = asyncio.Lock()
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
         """Initialize database manager only once."""
         if hasattr(self, "_initialized"):
             return
-        
+
         self._initialized = True
         self._engine: Optional[AsyncEngine] = None
         self._session_factory: Optional[async_sessionmaker] = None
         self._setup_engine()
-    
+
     def _setup_engine(self):
         """Setup async database engine."""
         try:
@@ -50,7 +50,7 @@ class DatabaseManager:
                 pool_pre_ping=True,
                 pool_recycle=3600,
             )
-            
+
             self._session_factory = async_sessionmaker(
                 bind=self._engine,
                 class_=AsyncSession,
@@ -58,26 +58,26 @@ class DatabaseManager:
                 autocommit=False,
                 autoflush=False,
             )
-            
+
             logger.info("Database engine initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize database engine: {str(e)}")
             raise
-    
+
     @property
     def engine(self) -> AsyncEngine:
         """Get database engine."""
         if self._engine is None:
             raise RuntimeError("Database engine not initialized")
         return self._engine
-    
+
     @property
     def session_factory(self) -> async_sessionmaker:
         """Get session factory."""
         if self._session_factory is None:
             raise RuntimeError("Session factory not initialized")
         return self._session_factory
-    
+
     async def create_tables(self):
         """Create all database tables."""
         try:
@@ -87,13 +87,13 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to create database tables: {str(e)}")
             raise
-    
+
     async def close(self):
         """Close database connections."""
         if self._engine:
             await self._engine.dispose()
             logger.info("Database connections closed")
-    
+
     @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """Get database session with context manager."""

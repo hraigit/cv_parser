@@ -3,7 +3,7 @@
 import hashlib
 import io
 import re
-from typing import BinaryIO, Optional, Tuple
+from typing import Optional, Tuple
 
 import fitz  # PyMuPDF
 import magic
@@ -11,7 +11,6 @@ from langchain_community.document_loaders import Blob
 from langchain_community.document_loaders.parsers.generic import MimeTypeBasedParser
 from langchain_community.document_loaders.parsers.html.bs4 import BS4HTMLParser
 from langchain_community.document_loaders.parsers.msword import MsWordParser
-from langchain_community.document_loaders.parsers.pdf import PDFMinerParser
 from langchain_community.document_loaders.parsers.txt import TextParser
 from langchain_core.documents import Document
 
@@ -202,8 +201,7 @@ class CustomWordParser:
             # Fallback to original MsWordParser
             try:
                 ms_parser = MsWordParser()
-                for doc in ms_parser.lazy_parse(blob):
-                    yield doc
+                yield from ms_parser.lazy_parse(blob)
                 return
             except Exception as fallback_error:
                 logger.warning(
@@ -297,7 +295,7 @@ class CustomWordParser:
                             [t.strip() for t in readable_text if len(t.strip()) > 2]
                         )
                         break
-                except:
+                except Exception:
                     continue
 
             if text_parts:
@@ -377,53 +375,6 @@ class RTFParser:
 
         return text
 
-    """Custom RTF parser for handling RTF files."""
-
-    def parse(self, blob: Blob) -> list[Document]:
-        """Parse RTF blob into documents.
-
-        Args:
-            blob: The blob to parse
-
-        Returns:
-            List of documents
-        """
-        try:
-            if RTF_AVAILABLE:
-                # Use striprtf for proper RTF parsing
-                rtf_content = blob.as_string()
-                text_content = rtf_to_text(rtf_content)
-            else:
-                # Fallback: simple RTF to text conversion
-                rtf_content = blob.as_string()
-                text_content = self._simple_rtf_to_text(rtf_content)
-
-            return [Document(page_content=text_content, metadata={"source": blob.path})]
-
-        except Exception as e:
-            logger.error(f"Failed to parse RTF: {str(e)}")
-            raise FileProcessingError(f"Failed to parse RTF file: {str(e)}")
-
-    def _simple_rtf_to_text(self, rtf_content: str) -> str:
-        """Simple RTF to text conversion fallback.
-
-        Args:
-            rtf_content: RTF content as string
-
-        Returns:
-            Extracted text
-        """
-        # Remove RTF control words and groups
-        text = re.sub(r"\\[a-z]+\d*", "", rtf_content)
-        text = re.sub(r"[{}]", "", text)
-        text = re.sub(r"\\[^a-z]", "", text)
-
-        # Clean up whitespace
-        text = re.sub(r"\s+", " ", text)
-        text = text.strip()
-
-        return text
-
 
 class FileProcessor:
     """Utility class for file processing operations."""
@@ -480,7 +431,7 @@ class FileProcessor:
             self.mime = magic.Magic(mime=True)
         except Exception as e:
             logger.error(f"Failed to initialize magic library: {str(e)}")
-            raise FileProcessingError("Failed to initialize file type detection")
+            raise FileProcessingError("Failed to initialize file type detection") from e
 
     def get_content_hash(self, content: bytes) -> str:
         """Generate SHA256 hash of content for caching.
@@ -534,7 +485,7 @@ class FileProcessor:
             raise
         except Exception as e:
             logger.error(f"Failed to detect MIME type: {str(e)}")
-            raise FileProcessingError(f"Failed to detect file type: {str(e)}")
+            raise FileProcessingError(f"Failed to detect file type: {str(e)}") from e
 
     def _guess_mimetype_from_extension(self, filename: str) -> Optional[str]:
         """Guess MIME type from file extension.
@@ -620,7 +571,7 @@ class FileProcessor:
             raise
         except Exception as e:
             logger.error(f"Failed to extract text from {filename}: {str(e)}")
-            raise FileProcessingError(f"Failed to process file: {str(e)}")
+            raise FileProcessingError(f"Failed to process file: {str(e)}") from e
 
     @staticmethod
     def clean_text(text: str) -> str:

@@ -1,9 +1,8 @@
 """File storage utilities for persisting uploaded files."""
 
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 from uuid import UUID
 
 from app.core.config import settings
@@ -63,7 +62,9 @@ class FileStorageManager:
 
         # Build unique filename
         if job_id:
-            job_id_short = str(job_id).split("-")[0]  # First segment of UUID
+            job_id_short = str(job_id).split("-", maxsplit=1)[
+                0
+            ]  # First segment of UUID
             unique_name = f"{base_name}_{timestamp}_{job_id_short}.{extension}"
         else:
             unique_name = f"{base_name}_{timestamp}.{extension}"
@@ -108,7 +109,7 @@ class FileStorageManager:
 
         except Exception as e:
             logger.error(f"Failed to save file {original_filename}: {str(e)}")
-            raise IOError(f"Failed to save file: {str(e)}")
+            raise IOError(f"Failed to save file: {str(e)}") from e
 
     def get_file(self, file_path: str) -> Optional[bytes]:
         """Retrieve file from storage.

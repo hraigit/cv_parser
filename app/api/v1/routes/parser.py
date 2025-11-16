@@ -55,7 +55,7 @@ async def get_result(job_id: UUID, db: AsyncSession = Depends(get_db)):
         raise
     except Exception as e:
         logger.error(f"Error getting parse result: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get(
@@ -98,7 +98,7 @@ async def get_latest_cv(
         raise
     except Exception as e:
         logger.error(f"Error getting latest CV: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get(
@@ -139,7 +139,7 @@ async def get_history(
 
     except Exception as e:
         logger.error(f"Error getting user history: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get(
@@ -246,7 +246,10 @@ async def get_cache_stats():
     "/parse-file-async",
     response_model=AsyncJobResponse,
     summary="Parse CV from file (Async - Background Processing)",
-    description="Async endpoint: Returns job ID immediately and processes file in background. Use /job/{job_id} to check status and /result/{job_id} to get final result.",
+    description=(
+        "Async endpoint: Returns job ID immediately and processes file in background. "
+        "Use /job/{job_id} to check status and /result/{job_id} to get final result."
+    ),
 )
 async def parse_file_async(
     background_tasks: BackgroundTasks,
@@ -291,7 +294,7 @@ async def parse_file_async(
         parser_service = get_parser_service()
 
         # Create placeholder job in DB
-        result = await parser_service.create_placeholder_job(
+        await parser_service.create_placeholder_job(
             session=db,
             job_id=job_id,
             user_id=user_id,
@@ -328,17 +331,21 @@ async def parse_file_async(
 
     except ValidationError as e:
         logger.warning(f"Validation error: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Unexpected error in parse_file_async: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.post(
     "/parse-text-async",
     response_model=AsyncJobResponse,
     summary="Parse CV from text (Async - Background Processing)",
-    description="Async endpoint: Returns job ID immediately and processes text in background. Supports both formatted CV text and free-form self-descriptions. Parse modes: 'basic' for high-level summary, 'advanced' for full detailed parsing (default).",
+    description=(
+        "Async endpoint: Returns job ID immediately and processes text in background. "
+        "Supports both formatted CV text and free-form self-descriptions. "
+        "Parse modes: 'basic' for high-level summary, 'advanced' for full detailed parsing (default)."
+    ),
 )
 async def parse_text_async(
     background_tasks: BackgroundTasks,
@@ -379,7 +386,7 @@ async def parse_text_async(
         parser_service = get_parser_service()
 
         # Create placeholder job
-        result = await parser_service.create_placeholder_job(
+        await parser_service.create_placeholder_job(
             session=db,
             job_id=job_id,
             user_id=user_id,

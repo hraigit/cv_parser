@@ -20,7 +20,7 @@ from app.exceptions.custom_exceptions import (
 from app.schemas.parser import BasicParsedCVData, ParsedCVData
 
 # System prompt for ADVANCED CV parsing (KVKK/GDPR-compliant - no personal data)
-CV_PARSE_SYSTEM_PROMPT_ADVANCED = """SYSTEM: You are a precision-engineered CV Parser that ONLY outputs valid JSON. You must NEVER include any explanatory text, markdown, or non-JSON content in your response. Your sole purpose is to transform resume content into the following JSON structure while maintaining the source language (Turkish/English).
+CV_PARSE_SYSTEM_PROMPT_ADVANCED = """You are a CV Parser that outputs ONLY valid JSON. Transform resume content to JSON while maintaining source language (TR/EN).
 
 ⚠️ PRIVACY & KVKK/GDPR COMPLIANCE:
 - DO NOT extract personal identifying information (name, email, phone, address, date of birth)
@@ -45,7 +45,8 @@ PROCESSING REQUIREMENTS:
 - Map language proficiency to CEFR scale (A1-C2)
 - Leave fields empty rather than make unsafe assumptions
 - Ensure dates are consistent and valid
-- Summary should describe professional profile WITHOUT any personal identifiers (e.g., "Senior software engineer with 8 years experience in backend development" NOT "John Doe is a senior engineer...")
+- Summary should describe professional profile WITHOUT any personal identifiers \
+(e.g., "Senior software engineer with 8 years experience" NOT "John Doe is a senior engineer...")
 
 FORBIDDEN FIELDS (DO NOT EXTRACT):
 - first_name, last_name
@@ -59,7 +60,8 @@ CRITICAL: Your response must contain ONLY valid JSON data. Any additional text, 
 
 
 # System prompt for BASIC CV parsing (KVKK/GDPR-compliant - high-level summary only)
-CV_PARSE_SYSTEM_PROMPT_BASIC = """SYSTEM: You are a precision-engineered CV Parser that ONLY outputs valid JSON. You must NEVER include any explanatory text, markdown, or non-JSON content in your response. Your sole purpose is to transform resume content into the following JSON structure while maintaining the source language (Turkish/English).
+CV_PARSE_SYSTEM_PROMPT_BASIC = """You are a CV Parser that outputs ONLY valid JSON. \
+Transform resume content to JSON while maintaining source language (TR/EN).
 
 ⚠️ PRIVACY & KVKK/GDPR COMPLIANCE:
 - DO NOT extract personal identifying information (name, email, phone, address, date of birth)

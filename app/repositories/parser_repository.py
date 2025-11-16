@@ -91,7 +91,7 @@ class ParserRepository:
 
         except Exception as e:
             logger.error(f"Failed to create parsed CV record: {str(e)}")
-            raise DatabaseError(f"Failed to create parsed CV: {str(e)}")
+            raise DatabaseError(f"Failed to create parsed CV: {str(e)}") from e
 
     async def get_by_id(
         self, session: AsyncSession, record_id: UUID
@@ -114,7 +114,7 @@ class ParserRepository:
             return result.scalar_one_or_none()
         except Exception as e:
             logger.error(f"Failed to get parsed CV by ID {record_id}: {str(e)}")
-            raise DatabaseError(f"Failed to retrieve parsed CV: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve parsed CV: {str(e)}") from e
 
     async def get_by_user_and_session(
         self,
@@ -158,7 +158,7 @@ class ParserRepository:
                 f"Failed to get parsed CVs for user {user_id}, "
                 f"session {session_id}: {str(e)}"
             )
-            raise DatabaseError(f"Failed to retrieve parsed CVs: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve parsed CVs: {str(e)}") from e
 
     async def get_by_user(
         self, session: AsyncSession, user_id: str, limit: int = 10, offset: int = 0
@@ -188,7 +188,7 @@ class ParserRepository:
 
         except Exception as e:
             logger.error(f"Failed to get parsed CVs for user {user_id}: {str(e)}")
-            raise DatabaseError(f"Failed to retrieve parsed CVs: {str(e)}")
+            raise DatabaseError(f"Failed to retrieve parsed CVs: {str(e)}") from e
 
     async def count_by_user_and_session(
         self, session: AsyncSession, user_id: str, session_id: str
@@ -217,7 +217,7 @@ class ParserRepository:
 
         except Exception as e:
             logger.error(f"Failed to count parsed CVs: {str(e)}")
-            raise DatabaseError(f"Failed to count parsed CVs: {str(e)}")
+            raise DatabaseError(f"Failed to count parsed CVs: {str(e)}") from e
 
     async def update_status(
         self,
@@ -261,7 +261,7 @@ class ParserRepository:
             raise
         except Exception as e:
             logger.error(f"Failed to update parsed CV status: {str(e)}")
-            raise DatabaseError(f"Failed to update parsed CV: {str(e)}")
+            raise DatabaseError(f"Failed to update parsed CV: {str(e)}") from e
 
     async def delete(self, session: AsyncSession, record_id: UUID) -> bool:
         """Delete parsed CV record.
@@ -291,7 +291,7 @@ class ParserRepository:
 
         except Exception as e:
             logger.error(f"Failed to delete parsed CV {record_id}: {str(e)}")
-            raise DatabaseError(f"Failed to delete parsed CV: {str(e)}")
+            raise DatabaseError(f"Failed to delete parsed CV: {str(e)}") from e
 
 
 def get_parser_repository() -> ParserRepository:

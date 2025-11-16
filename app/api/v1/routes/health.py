@@ -24,7 +24,7 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> HealthResponse:
         db_status = "connected"
     except Exception:
         db_status = "disconnected"
-    
+
     return HealthResponse(
         status="operational" if db_status == "connected" else "degraded",
         version=settings.APP_VERSION,

@@ -16,13 +16,13 @@ from app.exceptions.custom_exceptions import BaseAPIException
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager.
-    
+
     Handles startup and shutdown events.
     """
     # Startup
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
-    
+
     try:
         # Create database tables
         await db_manager.create_tables()
@@ -30,9 +30,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize database: {str(e)}")
         raise
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down application")
     try:
@@ -74,7 +74,7 @@ async def custom_exception_handler(request: Request, exc: BaseAPIException):
             "error_code": exc.error_code
         }
     )
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content={
@@ -95,7 +95,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "method": request.method
         }
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
@@ -116,7 +116,7 @@ async def general_exception_handler(request: Request, exc: Exception):
             "method": request.method
         }
     )
-    
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -144,9 +144,9 @@ async def log_requests(request: Request, call_next):
             "client": request.client.host if request.client else None
         }
     )
-    
+
     response = await call_next(request)
-    
+
     logger.info(
         f"Request completed: {request.method} {request.url.path} - {response.status_code}",
         extra={
@@ -155,13 +155,13 @@ async def log_requests(request: Request, call_next):
             "status_code": response.status_code
         }
     )
-    
+
     return response
 
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.HOST,
