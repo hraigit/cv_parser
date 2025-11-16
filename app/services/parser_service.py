@@ -347,7 +347,7 @@ class ParserService:
 
             if is_image:
                 # Use Vision API for images
-                logger.info(f"🖼️ [BACKGROUND] Using Vision API for image file")
+                logger.info("🖼️ [BACKGROUND] Using Vision API for image file")
                 raw_bytes = extraction_result.get("raw_bytes")
                 if not raw_bytes:
                     raise ValidationError("Image bytes not available for Vision API")
