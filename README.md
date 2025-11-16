@@ -4,7 +4,37 @@ Production-ready CV/Resume Parser API powered by FastAPI, OpenAI (GPT-4o-mini fo
 
 ## 🎯 Quick Guide
 
+### 📊 API Akış Diyagramı
+
+```mermaid
+flowchart TD
+    A[📄 Text CV] -->|POST /parse-text-async| C[job_id]
+    B[📎 File CV<br/>PDF/DOCX/Image] -->|POST /parse-file-async| C
+    
+    C -->|Yol 1: Job ile takip| D[GET /job/job_id]
+    D --> E{Status?}
+    E -->|processing| D
+    E -->|success| F[GET /result/job_id]
+    E -->|failed| G[❌ Error]
+    
+    C -->|Yol 2: Direkt son CV| H[GET /latest/user_id]
+    H --> I[✅ En güncel CV<br/>created_at DESC]
+    
+    J[👤 User] -->|Tüm geçmiş| K[GET /history/user_id]
+    K --> L[📋 Paginated Liste]
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style F fill:#e8f5e9
+    style G fill:#ffebee
+    style H fill:#f3e5f5
+    style I fill:#e8f5e9
+    style L fill:#f3e5f5
+```
+
 ### 📤 CV Gönderme (Upload)
+
 ```bash
 # Text olarak gönder
 POST /api/v1/parser/parse-text-async
@@ -16,6 +46,7 @@ POST /api/v1/parser/parse-file-async
 ```
 
 ### 🔍 Sonuç Alma (Retrieve)
+
 ```bash
 # 1️⃣ Job durumunu kontrol et
 GET /api/v1/parser/job/{job_id}
@@ -31,6 +62,7 @@ GET /api/v1/parser/latest/{user_id}
 ```
 
 ### 📋 Geçmiş (History)
+
 ```bash
 # User'ın tüm CV'lerini listele
 GET /api/v1/parser/history/{user_id}?page=1&page_size=10
