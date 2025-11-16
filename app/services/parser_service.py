@@ -12,6 +12,11 @@ from app.exceptions.custom_exceptions import ParserError, ValidationError
 from app.repositories.parser_repository import get_parser_repository
 from app.services.file_service import get_file_service
 from app.services.openai_service import get_openai_service
+from app.utils.experience_utils import (
+    calculate_total_experience_years,
+    enrich_educations,
+    enrich_professional_experiences,
+)
 from app.utils.storage_utils import get_file_storage_manager
 
 
@@ -24,6 +29,44 @@ class ParserService:
         self.openai_service = get_openai_service()
         self.repository = get_parser_repository()
         self.storage_manager = get_file_storage_manager()
+
+    def _enrich_parsed_data(self, parsed_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Enrich parsed data with calculated fields.
+
+        Args:
+            parsed_data: Raw parsed data from OpenAI
+
+        Returns:
+            Enriched data with calculated experience and durations
+        """
+        try:
+            # Get professional experiences
+            profile = parsed_data.get("profile", {})
+            experiences = profile.get("professional_experiences", [])
+
+            # Enrich each experience with duration_in_months
+            if experiences:
+                enriched_experiences = enrich_professional_experiences(experiences)
+                profile["professional_experiences"] = enriched_experiences
+
+                # Calculate and add total experience to basics
+                total_exp_years = calculate_total_experience_years(experiences)
+                if "basics" not in profile:
+                    profile["basics"] = {}
+                profile["basics"]["total_experience_in_years"] = total_exp_years
+
+            # Enrich educations with duration_in_years
+            educations = profile.get("educations", [])
+            if educations:
+                enriched_educations = enrich_educations(educations)
+                profile["educations"] = enriched_educations
+
+            parsed_data["profile"] = profile
+
+        except Exception as e:
+            logger.warning(f"Failed to enrich parsed data: {str(e)}")
+
+        return parsed_data
 
     async def get_parse_result(
         self, session: AsyncSession, record_id: UUID
@@ -313,6 +356,10 @@ class ParserService:
 
             # Extract metadata
             metadata = parsed_result.pop("_metadata", {})
+
+            # Enrich parsed data with calculated fields
+            parsed_result = self._enrich_parsed_data(parsed_result)
+
             cv_language = parsed_result.get("cv_language")
             processing_time = time.time() - start_time
 
@@ -408,6 +455,10 @@ class ParserService:
 
             # Extract metadata
             metadata = parsed_result.pop("_metadata", {})
+
+            # Enrich parsed data with calculated fields
+            parsed_result = self._enrich_parsed_data(parsed_result)
+
             cv_language = parsed_result.get("cv_language")
             processing_time = time.time() - start_time
 

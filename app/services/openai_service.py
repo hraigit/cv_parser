@@ -36,13 +36,12 @@ OUTPUT RULES:
 5. ANY non-JSON output is considered a critical failure
 
 OUTPUT SCHEMA:
-{"profile":{"basics":{"total_experience_in_years":"","profession":"","summary":"","skills":[],"has_driving_license":false},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"duration_in_months":"","company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
+{"profile":{"basics":{"profession":"","summary":"","skills":[],"has_driving_license":false},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
 
 PROCESSING REQUIREMENTS:
 - Extract all PROFESSIONAL information from the input CV
 - Use the same language as the input CV (Turkish/English)
 - Generate comprehensive summaries from full CV context
-- Calculate total experience from role durations
 - Map language proficiency to CEFR scale (A1-C2)
 - Leave fields empty rather than make unsafe assumptions
 - Ensure dates are consistent and valid
@@ -76,7 +75,7 @@ OUTPUT RULES:
 5. ANY non-JSON output is considered a critical failure
 
 OUTPUT SCHEMA:
-{"profile":{"basics":{"total_experience_in_years":"","profession":"","summary":"","skills":[],"has_driving_license":false},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"duration_in_months":"","company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
+{"profile":{"basics":{"profession":"","summary":"","skills":[],"has_driving_license":false},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
 
 BASIC PARSING MODE - PROCESSING REQUIREMENTS:
 - Extract ONLY high-level, essential PROFESSIONAL information
@@ -86,7 +85,7 @@ BASIC PARSING MODE - PROCESSING REQUIREMENTS:
 - For trainings_and_certifications: Include issuing_organization ONLY, leave description EMPTY
 - For awards: Include title ONLY, leave description EMPTY
 - Generate a SHORT summary (2-3 sentences max) highlighting key professional profile WITHOUT personal identifiers
-- Extract basic profile (profession, total_experience_in_years)
+- Extract basic profile (profession)
 - Extract skills list (technology/tool names only, no detailed descriptions)
 - Extract languages with proficiency levels
 - DO NOT extract detailed descriptions, project details, or responsibilities

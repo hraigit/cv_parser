@@ -33,9 +33,6 @@ class ParseFileRequest(BaseModel):
 class ProfileBasics(BaseModel):
     """Basic profile information (KVKK-compliant - no personal identifiers)."""
 
-    total_experience_in_years: Optional[str] = Field(
-        None, description="Total years of professional experience"
-    )
     profession: Optional[str] = Field(None, description="Primary profession or role")
     summary: Optional[str] = Field(
         None,
@@ -46,6 +43,9 @@ class ProfileBasics(BaseModel):
     )
     has_driving_license: bool = Field(
         default=False, description="Whether candidate has driving license"
+    )
+    total_experience_in_years: Optional[float] = Field(
+        None, description="Total years of professional experience (calculated)"
     )
 
     class Config:
@@ -75,6 +75,9 @@ class Education(BaseModel):
     end_year: Optional[str] = None
     issuing_organization: Optional[str] = None
     description: Optional[str] = None
+    duration_in_years: Optional[int] = Field(
+        None, description="Duration in years (calculated)"
+    )
 
     class Config:
         """Pydantic config."""
@@ -113,11 +116,13 @@ class ProfessionalExperience(BaseModel):
     start_date: Optional[WorkDate] = None
     is_current: bool = False
     end_date: Optional[WorkDate] = None
-    duration_in_months: Optional[str] = None
     company: Optional[str] = None
     location: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    duration_in_months: Optional[int] = Field(
+        None, description="Duration in months (calculated)"
+    )
 
     class Config:
         """Pydantic config."""
@@ -165,6 +170,9 @@ class BasicEducation(BaseModel):
     is_current: bool = False
     end_year: Optional[str] = None
     issuing_organization: Optional[str] = None
+    duration_in_years: Optional[int] = Field(
+        None, description="Duration in years (calculated)"
+    )
     # description removed for basic mode
 
     class Config:
@@ -192,10 +200,12 @@ class BasicProfessionalExperience(BaseModel):
     start_date: Optional[WorkDate] = None
     is_current: bool = False
     end_date: Optional[WorkDate] = None
-    duration_in_months: Optional[str] = None
     company: Optional[str] = None
     location: Optional[str] = None
     title: Optional[str] = None
+    duration_in_months: Optional[int] = Field(
+        None, description="Duration in months (calculated)"
+    )
     # description removed for basic mode
 
     class Config:
