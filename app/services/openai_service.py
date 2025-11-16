@@ -349,8 +349,7 @@ class OpenAIService:
                         "content": content_parts,
                     },
                 ],
-                max_tokens=self._max_tokens,
-                temperature=self._temperature,
+                max_completion_tokens=self._max_tokens,
                 response_format={"type": "json_object"},
             )
             api_time = time.time() - api_start_time

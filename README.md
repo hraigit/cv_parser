@@ -1,6 +1,6 @@
 # CV Parser API
 
-Production-ready CV/Resume Parser API powered by FastAPI, OpenAI (GPT-4o-mini for Vision, GPT-3.5-turbo for Text), and PostgreSQL.
+Production-ready CV/Resume Parser API powered by FastAPI, OpenAI (GPT-5-mini for Vision, GPT-3.5-turbo for Text), and PostgreSQL.
 
 ## 🎯 Quick Guide
 
@@ -116,9 +116,9 @@ curl "http://localhost:8000/api/v1/parser/latest/user123"
 
 ## ✨ Key Features
 
-- **🖼️ Vision API Support** - Parse CV images (JPG, PNG, WEBP, GIF) directly with GPT-4o-mini Vision
+- **🖼️ Vision API Support** - Parse CV images (JPG, PNG, WEBP, GIF) directly with GPT-5-mini Vision
 - **📄 Multi-format Support** - PDF, DOCX, TXT, HTML, RTF, CSV, XML, and image files
-- **🚀 Dual Model Strategy** - GPT-3.5-turbo for text (fast & cheap), GPT-4o-mini for images (powerful)
+- **🚀 Dual Model Strategy** - GPT-3.5-turbo for text (fast & cheap), GPT-5-mini for images (powerful)
 - **🔒 KVKK/GDPR Compliant** - Only professional data, no personal information
 - **⚡ Async Processing** - Background job processing for high concurrency
 - **💾 Auto File Storage** - Timestamp-based unique file naming
@@ -213,12 +213,12 @@ curl "http://localhost:8000/api/v1/parser/result/{job_id}"
 | File Type | Model | Why? |
 |-----------|-------|------|
 | **Text-based** (PDF, DOCX, TXT, etc.) | `gpt-3.5-turbo` | ⚡ Fast & 💰 ~90% cheaper |
-| **Images** (JPG, PNG, WEBP, GIF) | `gpt-4o-mini` | 🖼️ Vision API required |
+| **Images** (JPG, PNG, WEBP, GIF) | `gpt-5-mini` | 🖼️ Vision API required |
 
 **Benefits:**
 - 💰 **Cost Savings**: Text parsing uses cheaper GPT-3.5-turbo
 - ⚡ **Speed**: GPT-3.5-turbo responds faster for text
-- 🎯 **Quality**: GPT-4o-mini for images when Vision API is needed
+- 🎯 **Quality**: GPT-5-mini for images when Vision API is needed
 - 🔧 **Flexibility**: Easily configurable via environment variables
 
 ## 📋 Parse Modes
@@ -294,7 +294,7 @@ DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/cv_parser_db
 
 # OpenAI
 OPENAI_API_KEY=sk-your-api-key-here
-OPENAI_MODEL=gpt-4o-mini          # For Vision API (images)
+OPENAI_MODEL=gpt-5-mini           # For Vision API (images)
 OPENAI_TEXT_MODEL=gpt-3.5-turbo   # For text parsing (PDF, DOCX, etc.)
 OPENAI_TEMPERATURE=0.1
 OPENAI_VISION_DETAIL=high
@@ -322,7 +322,7 @@ LOG_LEVEL=INFO
 ## 🛠️ Technology Stack
 
 - **FastAPI** 0.109+ - High-performance async web framework
-- **OpenAI GPT-4o-mini** - Vision API for image CV parsing
+- **OpenAI GPT-5-mini** - Vision API for image CV parsing
 - **OpenAI GPT-3.5-turbo** - Fast text-based CV parsing
 - **PostgreSQL** 15+ with asyncpg - Database
 - **SQLAlchemy** 2.0 - Async ORM
