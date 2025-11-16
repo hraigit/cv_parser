@@ -95,29 +95,38 @@ curl "http://localhost:8000/api/v1/parser/result/550e8400-..."
 
 ## 🚀 Quick Start
 
-### 1. Database Setup (Alembic)
+### 1. Install Dependencies
 
 ```bash
-# Install dependencies
 pip install -r requirements.txt
+```
 
-# Configure database URL in .env
+### 2. Configure Environment
+
+Create `.env` file with required settings:
+
+```bash
+# Database
 DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/cv_parser_db
 
+# OpenAI
+OPENAI_API_KEY=sk-your-api-key-here
+```
+
+### 3. Database Setup (Alembic)
+
+```bash
 # Run migrations to create database schema
 alembic upgrade head
 ```
 
-### 2. Start the API
+### 4. Start the API
 
 ```bash
-# Configure OpenAI API key in .env
-OPENAI_API_KEY=sk-your-api-key-here
-
 # Run the application
 python run.py
 
-# Access API documentation
+# Access API documentation at:
 # http://localhost:8000/docs
 ```
 
@@ -216,16 +225,6 @@ CREATE TABLE parsed_cvs (
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
-```
-
-## 🐳 Docker Deployment
-
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# Access API
-http://localhost:8000
 ```
 
 ## 🔧 Configuration

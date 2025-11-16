@@ -4,7 +4,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from app.core.config import settings
 
@@ -16,12 +16,12 @@ class AsyncSafeLoggerSingleton:
     _lock = asyncio.Lock()
     _thread_lock = None  # Will be initialized in __init__
 
-    def __new__(cls):
+    def __new__(cls) -> "AsyncSafeLoggerSingleton":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize logger only once."""
         if hasattr(self, "_initialized"):
             return
@@ -72,27 +72,27 @@ class AsyncSafeLoggerSingleton:
         """Get logger instance."""
         return self._logger
 
-    def debug(self, msg: str, *args, **kwargs):
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log debug message."""
         self._logger.debug(msg, *args, **kwargs)
 
-    def info(self, msg: str, *args, **kwargs):
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log info message."""
         self._logger.info(msg, *args, **kwargs)
 
-    def warning(self, msg: str, *args, **kwargs):
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log warning message."""
         self._logger.warning(msg, *args, **kwargs)
 
-    def error(self, msg: str, *args, **kwargs):
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log error message."""
         self._logger.error(msg, *args, **kwargs)
 
-    def critical(self, msg: str, *args, **kwargs):
+    def critical(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log critical message."""
         self._logger.critical(msg, *args, **kwargs)
 
-    def exception(self, msg: str, *args, **kwargs):
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
         """Log exception with traceback."""
         self._logger.exception(msg, *args, **kwargs)
 
