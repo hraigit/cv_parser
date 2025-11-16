@@ -1,4 +1,5 @@
 """Application configuration using Pydantic Settings."""
+
 from functools import lru_cache
 from typing import Optional
 
@@ -8,12 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Application settings with validation."""
-    
+
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     # Application
@@ -27,22 +25,39 @@ class Settings(BaseSettings):
     PORT: int = Field(default=8000)
 
     # Database
-    DATABASE_URL: str = Field(default="", description="PostgreSQL connection string with asyncpg driver")
+    DATABASE_URL: str = Field(
+        default="", description="PostgreSQL connection string with asyncpg driver"
+    )
     DB_POOL_SIZE: int = Field(default=20)
     DB_MAX_OVERFLOW: int = Field(default=10)
     DB_ECHO: bool = Field(default=False)
 
     # OpenAI
     OPENAI_API_KEY: str = Field(default="")
-    OPENAI_MODEL: str = Field(default="gpt-3.5-turbo")
+    OPENAI_MODEL: str = Field(default="gpt-4o-mini", description="Default/Vision model")
+    OPENAI_TEXT_MODEL: str = Field(
+        default="gpt-3.5-turbo", description="Model for text-based CV parsing"
+    )
     OPENAI_MAX_TOKENS: int = Field(default=3000)
     OPENAI_TEMPERATURE: float = Field(default=0.1)
+    OPENAI_VISION_DETAIL: str = Field(
+        default="high", description="Vision API detail level: low, high, or auto"
+    )
 
     # File Processing
     MAX_FILE_SIZE_MB: int = Field(default=10)
     MAX_WORKERS: int = Field(default=4)
     CACHE_TTL_SECONDS: int = Field(default=3600)
     CACHE_MAX_SIZE: int = Field(default=1000)
+
+    # File Storage
+    FILE_STORAGE_PATH: str = Field(
+        default="/tmp/cv_parser",
+        description="Path to store uploaded CV files with timestamp",
+    )
+    FILE_STORAGE_ENABLED: bool = Field(
+        default=True, description="Enable/disable file storage to disk"
+    )
 
     # Logging
     LOG_LEVEL: str = Field(default="INFO")

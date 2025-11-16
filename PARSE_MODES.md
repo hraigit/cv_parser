@@ -1,34 +1,39 @@
 # CV Parse Modes
 
-Bu proje iki farklı CV parse etme modu sunmaktadır:
+This project offers two different CV parsing modes.
 
-## 1. Basic Mode (Temel Mod)
+**⚠️ KVKK/GDPR Compliance:** In all modes, personal information (name, surname, phone, email, address, date of birth, references) is NOT parsed. Only professional information is extracted.
 
-**Etiket:** `basic`
+## 1. Basic Mode
 
-**Açıklama:** Sadece üst düzey bilgileri parse eder, detaylı açıklamaları çıkarmaz.
+**Label:** `basic`
 
-### Çıkarılan Bilgiler:
-- ✅ İsim, Soyisim
-- ✅ İletişim bilgileri (email, telefon, adres)
-- ✅ Meslek ve toplam deneyim süresi
-- ✅ **Çalıştığı yerler** (şirket adı ve pozisyon) - **DETAYSIZ**
-- ✅ **Eğitim** (okul adı) - **DETAYSIZ**
-- ✅ **Sertifikalar** (veren kuruluş) - **DETAYSIZ**
-- ✅ **Ödüller** (başlık) - **DETAYSIZ**
-- ✅ Yetenekler/Beceriler (sadece isimler)
-- ✅ Diller ve seviyeleri
-- ✅ **Kısa özet** (2-3 cümle)
+**Description:** Parses only high-level information without detailed descriptions.
 
-### Çıkarılmayan Bilgiler:
-- ❌ İş deneyimi detayları (sorumluluklar, başarılar)
-- ❌ Proje detayları
-- ❌ Eğitim açıklamaları
-- ❌ Sertifika detayları
-- ❌ Ödül açıklamaları
-- ❌ Referans detayları (sadece isim ve pozisyon)
+### Extracted Information
 
-### Kullanım Örneği:
+- ✅ Profession and total years of experience
+- ✅ **Companies worked at** (company name and position) - **NO DETAILS**
+- ✅ **Education** (institution name) - **NO DETAILS**
+- ✅ **Certifications** (issuing organization) - **NO DETAILS**
+- ✅ **Awards** (title) - **NO DETAILS**
+- ✅ Skills (names only)
+- ✅ Languages and proficiency levels
+- ✅ **Brief summary** (2-3 sentences)
+- ✅ Driving license status
+
+### Not Extracted
+
+- ❌ **Personal information** (name, surname, phone, email, address, date of birth)
+- ❌ Work experience details (responsibilities, achievements)
+- ❌ Project details
+- ❌ Education descriptions
+- ❌ Certification details
+- ❌ Award descriptions
+- ❌ **References** (KVKK/GDPR compliance)
+
+### Usage Example:
+
 ```bash
 curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
   -F "user_id=user123" \
@@ -37,75 +42,87 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
   -F "parse_mode=basic"
 ```
 
-## 2. Advanced Mode (Gelişmiş Mod)
+## 2. Advanced Mode
 
-**Etiket:** `advanced` (varsayılan)
+**Label:** `advanced` (default)
 
-**Açıklama:** Tam detaylı parse işlemi yapar, tüm bilgileri çıkarır.
+**Description:** Full detailed parsing with comprehensive information extraction.
 
-### Çıkarılan Bilgiler:
-- ✅ Tüm kişisel bilgiler
-- ✅ İletişim bilgileri
-- ✅ **Çalıştığı yerler** - **DETAYLI** (şirket, pozisyon, sorumluluklar, başarılar, projeler)
-- ✅ **Eğitim** - **DETAYLI** (okul, bölüm, not ortalaması, projeler)
-- ✅ **Sertifikalar** - **DETAYLI** (tüm açıklamalar)
-- ✅ **Ödüller** - **DETAYLI** (tüm açıklamalar)
-- ✅ Yetenekler/Beceriler (detaylı)
-- ✅ Diller ve seviyeleri
-- ✅ Referanslar (tüm bilgiler)
-- ✅ **Kapsamlı özet** (tüm CV içeriğinden oluşturulmuş)
+### Extracted Information
 
-### Kullanım Örneği:
+- ✅ Profession and total years of experience
+- ✅ **Work experience** - **DETAILED** (company, position, responsibilities, achievements, projects)
+- ✅ **Education** - **DETAILED** (institution, department, GPA, projects)
+- ✅ **Certifications** - **DETAILED** (all descriptions)
+- ✅ **Awards** - **DETAILED** (all descriptions)
+- ✅ Skills (detailed)
+- ✅ Languages and proficiency levels
+- ✅ **Comprehensive summary** (generated from entire CV)
+- ✅ Driving license status
+
+**❌ Personal information NOT parsed:** Name, surname, phone, email, address, date of birth, references (KVKK/GDPR compliance)
+
+### Usage Example:
+
 ```bash
-# Advanced mode (varsayılan)
+# Advanced mode (default)
 curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
   -F "user_id=user123" \
   -F "session_id=session456" \
   -F "file=@cv.pdf" \
   -F "parse_mode=advanced"
 
-# veya parse_mode belirtmeden (varsayılan olarak advanced kullanılır)
+# Or without specifying parse_mode (defaults to advanced)
 curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
   -F "user_id=user123" \
   -F "session_id=session456" \
   -F "file=@cv.pdf"
 ```
 
-## Karşılaştırma
+## Comparison
 
-| Özellik | Basic Mode | Advanced Mode |
+| Feature | Basic Mode | Advanced Mode |
 |---------|------------|---------------|
-| İsim, Soyisim | ✅ | ✅ |
-| İletişim Bilgileri | ✅ | ✅ |
-| Şirket Adları | ✅ | ✅ |
-| Pozisyon Başlıkları | ✅ | ✅ |
-| İş Sorumlulukları | ❌ | ✅ |
-| Proje Detayları | ❌ | ✅ |
-| Eğitim Kurumları | ✅ | ✅ |
-| Eğitim Detayları | ❌ | ✅ |
-| Beceriler | ✅ (liste) | ✅ (detaylı) |
-| Özet | ✅ (kısa) | ✅ (kapsamlı) |
-| Token Kullanımı | Daha az | Daha fazla |
-| İşlem Süresi | Daha hızlı | Normal |
+| Personal Information | ❌ KVKK/GDPR | ❌ KVKK/GDPR |
+| Profession/Experience | ✅ | ✅ |
+| Company Names | ✅ | ✅ |
+| Position Titles | ✅ | ✅ |
+| Job Responsibilities | ❌ | ✅ |
+| Project Details | ❌ | ✅ |
+| Education Institutions | ✅ | ✅ |
+| Education Details | ❌ | ✅ |
+| Skills | ✅ (list) | ✅ (detailed) |
+| Summary | ✅ (brief) | ✅ (comprehensive) |
+| Driving License | ✅ | ✅ |
+| **Text Model** | gpt-3.5-turbo | gpt-3.5-turbo |
+| **Image Model** | gpt-4o-mini | gpt-4o-mini |
+| Token Usage | Lower | Higher |
+| Processing Time | Faster | Normal |
 
-## API Response Farkları
+**KVKK/GDPR Note:** In both modes, personal information (name, surname, phone, email, address, date of birth, references) is NOT parsed.
 
-### Basic Mode Response Örneği:
+**Model Note:** Text-based files use GPT-3.5-turbo (fast & cheap), image files use GPT-4o-mini Vision API.
+
+## API Response Examples
+
+### Basic Mode Response
+
 ```json
 {
   "id": "uuid",
   "parsed_data": {
     "profile": {
       "basics": {
-        "first_name": "Ahmet",
-        "last_name": "Yılmaz",
-        "summary": "10 yıllık deneyime sahip Yazılım Mühendisi. Python ve Java uzmanı."
+        "profession": "Software Engineer",
+        "total_experience_in_years": 10,
+        "summary": "Software Engineer with 10 years of experience. Expert in Python and Java.",
+        "has_driving_license": true
       },
       "professional_experiences": [
         {
           "company": "ABC Tech",
           "title": "Senior Software Engineer",
-          "description": ""  // BOŞ - BASIC MODE
+          "description": ""  // EMPTY - BASIC MODE
         }
       ]
     }
@@ -114,22 +131,33 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
 }
 ```
 
-### Advanced Mode Response Örneği:
+**Note:** Personal information (first_name, last_name, emails, phone_numbers) is NOT parsed due to KVKK/GDPR compliance.
+
+### Advanced Mode Response
+
 ```json
 {
   "id": "uuid",
   "parsed_data": {
     "profile": {
       "basics": {
-        "first_name": "Ahmet",
-        "last_name": "Yılmaz",
-        "summary": "10 yıllık deneyime sahip Yazılım Mühendisi. Python, Java ve mikroservis mimarileri konusunda uzman. 5 kişilik ekip yönetimi deneyimi var. Cloud teknolojileri ve DevOps pratikleri konusunda derin bilgiye sahip."
+        "profession": "Software Engineer",
+        "total_experience_in_years": 10,
+        "summary": "Software Engineer with 10 years of experience. Expert in Python, Java, and microservices architecture. Experience managing a team of 5 developers. Deep knowledge in cloud technologies and DevOps practices.",
+        "has_driving_license": true,
+        "skills": [
+          {
+            "name": "Python",
+            "proficiency": "Expert",
+            "years_of_experience": 10
+          }
+        ]
       },
       "professional_experiences": [
         {
           "company": "ABC Tech",
           "title": "Senior Software Engineer",
-          "description": "Mikroservis mimarisi tasarımı ve implementasyonu. REST API geliştirme. Docker ve Kubernetes ile deployment. 5 kişilik geliştirici ekibinin teknik liderliği. AWS üzerinde scalable sistemler tasarımı."  // DOLU - ADVANCED MODE
+          "description": "Microservices architecture design and implementation. REST API development. Deployment with Docker and Kubernetes. Technical leadership of 5-person developer team. Scalable systems design on AWS."  // FILLED - ADVANCED MODE
         }
       ]
     }
@@ -138,44 +166,52 @@ curl -X POST "http://localhost:8000/api/v1/parser/parse-file" \
 }
 ```
 
-## Ne Zaman Hangi Modu Kullanmalı?
+**Note:** Personal information (first_name, last_name, emails, phone_numbers, date_of_birth, address) is NOT parsed due to KVKK/GDPR compliance.
 
-### Basic Mode Kullanım Senaryoları:
-- 🔍 Hızlı CV taraması yapmak istediğinizde
-- 💰 Token maliyetini düşürmek istediğinizde
-- ⚡ Sadece özet bilgiye ihtiyaç duyduğunuzda
-- 📊 CV'leri kategorize etmek için (kim, nerede çalışmış)
-- 🎯 İlk eleme/filtreleme aşaması için
+## When to Use Each Mode?
 
-### Advanced Mode Kullanım Senaryoları:
-- 📝 Detaylı CV analizi gerektiğinde
-- 🎓 Proje ve başarı detaylarına ihtiyaç duyduğunuzde
-- 🔬 Derinlemesine yetenek değerlendirmesi için
-- 📋 Tam CV veritabanı oluşturmak için
-- 🤝 İşe alım sürecinin son aşamalarında
+### Use Basic Mode When:
 
-## Teknik Detaylar
+- 🔍 Quick CV screening is needed
+- 💰 Reducing token costs is important
+- ⚡ Only summary information is required
+- 📊 Categorizing CVs (who worked where)
+- 🎯 Initial filtering/screening stage
 
-### Değişiklikler:
-1. **openai_service.py**: İki farklı system prompt eklendi
-   - `CV_PARSE_SYSTEM_PROMPT_BASIC`: Temel mod için
-   - `CV_PARSE_SYSTEM_PROMPT_ADVANCED`: Gelişmiş mod için
+### Use Advanced Mode When:
 
-2. **parser_service.py**: `parse_from_file()` metoduna `parse_mode` parametresi eklendi
+- 📝 Detailed CV analysis is required
+- 🎓 Project and achievement details are needed
+- 🔬 In-depth talent assessment is necessary
+- 📋 Building comprehensive CV database
+- 🤝 Final stages of hiring process
 
-3. **parser.py (routes)**: `/parse-file` endpoint'ine `parse_mode` Form parametresi eklendi
+## Technical Details
 
-### Geriye Dönük Uyumluluk:
-- `parse_mode` parametresi opsiyoneldir
-- Varsayılan değer: `"advanced"`
-- Mevcut kodlar hiç değişiklik yapmadan çalışmaya devam edecek
+### Implementation:
 
-## Hata Durumları
+1. **openai_service.py**: Two different system prompts added
+   - `CV_PARSE_SYSTEM_PROMPT_BASIC`: For basic mode
+   - `CV_PARSE_SYSTEM_PROMPT_ADVANCED`: For advanced mode
 
-Geçersiz `parse_mode` değeri gönderilirse:
+2. **parser_service.py**: `parse_mode` parameter added to `parse_from_file()` method
+
+3. **parser.py (routes)**: `parse_mode` Form parameter added to `/parse-file` endpoint
+
+### Backward Compatibility:
+
+- `parse_mode` parameter is optional
+- Default value: `"advanced"`
+- Existing code continues to work without changes
+
+## Error Handling
+
+If invalid `parse_mode` value is sent:
+
 ```json
 {
   "detail": "Invalid parse_mode: invalid_value. Must be 'basic' or 'advanced'"
 }
 ```
+
 HTTP Status: 400 Bad Request
