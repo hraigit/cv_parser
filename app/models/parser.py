@@ -32,6 +32,7 @@ class ParsedCV(Base):
     stored_file_path: Mapped[Optional[str]] = mapped_column(
         String(1000), nullable=True, comment="Full path to stored file on disk"
     )
+    _type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     # Parsed data
     parsed_data: Mapped[dict] = mapped_column(JSONB, nullable=False)

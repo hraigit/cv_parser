@@ -4,18 +4,12 @@ import time
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_manager
 from app.core.logging import logger
-from app.exceptions.custom_exceptions import (
-    EntityExtractionError,
-    ParserError,
-    ValidationError,
-)
+from app.exceptions.custom_exceptions import ParserError, ValidationError
 from app.repositories.parser_repository import get_parser_repository
-from app.schemas.parser import ParsedCVData
 from app.services.file_service import get_file_service
 from app.services.openai_service import get_openai_service
 from app.utils.storage_utils import get_file_storage_manager
@@ -30,244 +24,6 @@ class ParserService:
         self.openai_service = get_openai_service()
         self.repository = get_parser_repository()
         self.storage_manager = get_file_storage_manager()
-
-    async def parse_from_text(
-        self, session: AsyncSession, user_id: str, session_id: str, text: str
-    ) -> Dict[str, Any]:
-        """Parse CV from text input.
-
-        Args:
-            session: Database session
-            user_id: User identifier
-            session_id: Session identifier
-            text: CV text to parse
-
-        Returns:
-            Parsed CV data with metadata
-
-        Raises:
-            ParserError: If parsing fails
-        """
-        start_time = time.time()
-
-        try:
-            logger.info(
-                f"🚀 [TIMING] Starting text parsing for user: {user_id}, "
-                f"session: {session_id}, text length: {len(text)} characters"
-            )
-
-            # Validate input
-            if not text or len(text.strip()) < 10:
-                raise ValidationError("Text is too short to parse")
-
-            # Parse with OpenAI
-            openai_start = time.time()
-            parsed_result = await self.openai_service.parse_cv(text)
-            openai_time = time.time() - openai_start
-
-            logger.info(
-                f"⏱️ [TIMING] OpenAI parsing completed in {openai_time:.2f} seconds"
-            )
-
-            # Extract metadata
-            metadata = parsed_result.pop("_metadata", {})
-
-            # Get CV language from parsed data
-            cv_language = parsed_result.get("cv_language")
-
-            # Calculate processing time
-            processing_time = time.time() - start_time
-
-            # Save to database
-            db_start = time.time()
-            db_record = await self.repository.create(
-                session=session,
-                user_id=user_id,
-                session_id=session_id,
-                parsed_data=parsed_result,
-                input_text=text[:5000],  # Store first 5000 chars
-                cv_language=cv_language,
-                processing_time_seconds=processing_time,
-                openai_model=metadata.get("model"),
-                tokens_used=metadata.get("tokens_used"),
-                status="success",
-            )
-            db_time = time.time() - db_start
-
-            logger.info(
-                f"✅ [TIMING] Successfully parsed text for user: {user_id}, "
-                f"session: {session_id}, record_id: {db_record.id} | "
-                f"Total: {processing_time:.2f}s, OpenAI: {openai_time:.2f}s, DB: {db_time:.2f}s"
-            )
-
-            return {
-                "id": db_record.id,
-                "user_id": user_id,
-                "session_id": session_id,
-                "parsed_data": parsed_result,
-                "cv_language": cv_language,
-                "processing_time_seconds": processing_time,
-                "tokens_used": metadata.get("tokens_used"),
-                "status": "success",
-                "created_at": db_record.created_at,
-            }
-
-        except ValidationError:
-            raise
-        except Exception as e:
-            processing_time = time.time() - start_time
-            logger.error(
-                f"Failed to parse text for user: {user_id}, "
-                f"session: {session_id}: {str(e)}"
-            )
-
-            # Save error to database
-            try:
-                await self.repository.create(
-                    session=session,
-                    user_id=user_id,
-                    session_id=session_id,
-                    parsed_data={},
-                    input_text=text[:5000],
-                    processing_time_seconds=processing_time,
-                    status="failed",
-                    error_message=str(e),
-                )
-            except Exception as db_error:
-                logger.error(f"Failed to save error record: {str(db_error)}")
-
-            raise ParserError(f"Failed to parse CV from text: {str(e)}")
-
-    async def parse_from_file(
-        self,
-        session: AsyncSession,
-        user_id: str,
-        session_id: str,
-        file: UploadFile,
-        parse_mode: str = "advanced",
-    ) -> Dict[str, Any]:
-        """Parse CV from uploaded file.
-
-        Args:
-            session: Database session
-            user_id: User identifier
-            session_id: Session identifier
-            file: Uploaded file
-            parse_mode: Parsing mode - "basic" for high-level info only, "advanced" for full details
-
-        Returns:
-            Parsed CV data with metadata
-
-        Raises:
-            ParserError: If parsing fails
-        """
-        start_time = time.time()
-
-        try:
-            logger.info(
-                f"🚀 [TIMING] Starting file parsing for user: {user_id}, "
-                f"session: {session_id}, file: {file.filename}, mode: {parse_mode}"
-            )
-
-            # Extract text from file
-            file_start = time.time()
-            extraction_result = await self.file_service.extract_text_from_file(file)
-            extracted_text = extraction_result["content"]
-            file_time = time.time() - file_start
-
-            logger.info(
-                f"📄 [TIMING] File extraction completed in {file_time:.2f} seconds"
-            )
-
-            # Validate extracted text
-            if not extracted_text or len(extracted_text.strip()) < 10:
-                raise ValidationError("Extracted text is too short to parse")
-
-            # Parse with OpenAI using specified mode
-            openai_start = time.time()
-            parsed_result = await self.openai_service.parse_cv(
-                extracted_text, parse_mode=parse_mode
-            )
-            openai_time = time.time() - openai_start
-
-            logger.info(
-                f"⏱️ [TIMING] OpenAI parsing completed in {openai_time:.2f} seconds"
-            )
-
-            # Extract metadata
-            metadata = parsed_result.pop("_metadata", {})
-
-            # Get CV language
-            cv_language = parsed_result.get("cv_language")
-
-            # Calculate total processing time
-            processing_time = time.time() - start_time
-
-            # Save to database
-            db_start = time.time()
-            db_record = await self.repository.create(
-                session=session,
-                user_id=user_id,
-                session_id=session_id,
-                parsed_data=parsed_result,
-                input_text=extracted_text[:5000],
-                file_name=file.filename,
-                file_mime_type=extraction_result["mime_type"],
-                cv_language=cv_language,
-                processing_time_seconds=processing_time,
-                openai_model=metadata.get("model"),
-                tokens_used=metadata.get("tokens_used"),
-                status="success",
-            )
-            db_time = time.time() - db_start
-
-            logger.info(
-                f"✅ [TIMING] Successfully parsed file for user: {user_id}, "
-                f"session: {session_id}, record_id: {db_record.id}, mode: {parse_mode} | "
-                f"Total: {processing_time:.2f}s, File: {file_time:.2f}s, "
-                f"OpenAI: {openai_time:.2f}s, DB: {db_time:.2f}s"
-            )
-
-            return {
-                "id": db_record.id,
-                "user_id": user_id,
-                "session_id": session_id,
-                "parsed_data": parsed_result,
-                "cv_language": cv_language,
-                "file_name": file.filename,
-                "file_mime_type": extraction_result["mime_type"],
-                "processing_time_seconds": processing_time,
-                "tokens_used": metadata.get("tokens_used"),
-                "parse_mode": parse_mode,
-                "status": "success",
-                "created_at": db_record.created_at,
-            }
-
-        except ValidationError:
-            raise
-        except Exception as e:
-            processing_time = time.time() - start_time
-            logger.error(
-                f"Failed to parse file for user: {user_id}, "
-                f"session: {session_id}, file: {file.filename}: {str(e)}"
-            )
-
-            # Save error to database
-            try:
-                await self.repository.create(
-                    session=session,
-                    user_id=user_id,
-                    session_id=session_id,
-                    parsed_data={},
-                    file_name=file.filename,
-                    processing_time_seconds=processing_time,
-                    status="failed",
-                    error_message=str(e),
-                )
-            except Exception as db_error:
-                logger.error(f"Failed to save error record: {str(db_error)}")
-
-            raise ParserError(f"Failed to parse CV from file: {str(e)}")
 
     async def get_parse_result(
         self, session: AsyncSession, record_id: UUID
@@ -294,6 +50,7 @@ class ParserService:
                 "parsed_data": db_record.parsed_data,
                 "cv_language": db_record.cv_language,
                 "file_name": db_record.file_name,
+                "stored_file_path": db_record.stored_file_path,
                 "processing_time_seconds": db_record.processing_time_seconds,
                 "status": db_record.status,
                 "error_message": db_record.error_message,
@@ -304,6 +61,62 @@ class ParserService:
         except Exception as e:
             logger.error(f"Failed to get parse result {record_id}: {str(e)}")
             raise ParserError(f"Failed to retrieve parse result: {str(e)}")
+
+    async def get_latest_cv(
+        self,
+        session: AsyncSession,
+        user_id: str,
+        session_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Get the most recently parsed CV for a user.
+
+        Args:
+            session: Database session
+            user_id: User identifier
+            session_id: Optional session filter
+
+        Returns:
+            Latest CV data or None
+        """
+        try:
+            from sqlalchemy import desc, select
+
+            from app.models.parser import ParsedCV
+
+            # Build query
+            query = select(ParsedCV).where(ParsedCV.user_id == user_id)
+
+            # Add session filter if provided
+            if session_id:
+                query = query.where(ParsedCV.session_id == session_id)
+
+            # Order by created_at DESC and get first result
+            query = query.order_by(desc(ParsedCV.created_at)).limit(1)
+
+            result = await session.execute(query)
+            db_record = result.scalar_one_or_none()
+
+            if not db_record:
+                return None
+
+            return {
+                "id": db_record.id,
+                "user_id": db_record.user_id,
+                "session_id": db_record.session_id,
+                "parsed_data": db_record.parsed_data,
+                "cv_language": db_record.cv_language,
+                "file_name": db_record.file_name,
+                "stored_file_path": db_record.stored_file_path,
+                "processing_time_seconds": db_record.processing_time_seconds,
+                "status": db_record.status,
+                "error_message": db_record.error_message,
+                "created_at": db_record.created_at,
+                "updated_at": db_record.updated_at,
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to get latest CV for user {user_id}: {str(e)}")
+            raise ParserError(f"Failed to retrieve latest CV: {str(e)}")
 
     async def get_user_history(
         self,
@@ -374,6 +187,7 @@ class ParserService:
         user_id: str,
         session_id: str,
         file_name: Optional[str] = None,
+        _type: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a placeholder job record for background processing.
 
@@ -383,6 +197,7 @@ class ParserService:
             user_id: User identifier
             session_id: Session identifier
             file_name: Optional filename
+            _type: Type of input (e.g., 'pdf', 'free_text')
 
         Returns:
             Job information
@@ -399,6 +214,7 @@ class ParserService:
                 parsed_data={},
                 file_name=file_name,
                 status="processing",
+                _type=_type,
             )
 
             logger.info(
@@ -550,7 +366,12 @@ class ParserService:
                 logger.error(f"Failed to update error status: {str(db_error)}")
 
     async def process_text_background(
-        self, job_id: UUID, user_id: str, session_id: str, text: str
+        self,
+        job_id: UUID,
+        user_id: str,
+        session_id: str,
+        text: str,
+        parse_mode: str = "advanced",
     ):
         """Process CV text in background.
 
@@ -559,6 +380,7 @@ class ParserService:
             user_id: User identifier
             session_id: Session identifier
             text: CV text content
+            parse_mode: Parse mode ('basic' or 'advanced')
         """
         start_time = time.time()
         db_manager = get_db_manager()
@@ -566,7 +388,7 @@ class ParserService:
         try:
             logger.info(
                 f"🚀 [BACKGROUND] Starting text parsing for job: {job_id}, "
-                f"user: {user_id}, text length: {len(text)}"
+                f"user: {user_id}, text length: {len(text)}, mode: {parse_mode}"
             )
 
             # Validate input
@@ -575,7 +397,9 @@ class ParserService:
 
             # Parse with OpenAI
             openai_start = time.time()
-            parsed_result = await self.openai_service.parse_cv(text)
+            parsed_result = await self.openai_service.parse_cv(
+                text, parse_mode=parse_mode
+            )
             openai_time = time.time() - openai_start
 
             logger.info(

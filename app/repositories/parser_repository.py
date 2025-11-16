@@ -31,6 +31,7 @@ class ParserRepository:
         status: str = "success",
         error_message: Optional[str] = None,
         record_id: Optional[UUID] = None,
+        _type: Optional[str] = None,
     ) -> ParsedCV:
         """Create a new parsed CV record.
 
@@ -50,6 +51,7 @@ class ParserRepository:
             status: Processing status
             error_message: Error message if failed
             record_id: Optional pre-generated UUID for the record
+            _type: Type of input (e.g., 'pdf', 'free_text')
 
         Returns:
             Created ParsedCV instance
@@ -73,6 +75,7 @@ class ParserRepository:
                 tokens_used=tokens_used,
                 status=status,
                 error_message=error_message,
+                _type=_type,
             )
 
             session.add(parsed_cv)
