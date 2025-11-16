@@ -37,31 +37,24 @@ class ParseFileRequest(BaseModel):
     session_id: str = Field(..., min_length=1, description="Session identifier")
 
 
-# CV Structure Schemas (based on your prompt)
-class DateOfBirth(BaseModel):
-    """Date of birth model."""
-
-    year: Optional[str] = None
-    month: Optional[str] = None
-    day: Optional[str] = None
-
-
+# CV Structure Schemas (KVKK-compliant - no personal data)
 class ProfileBasics(BaseModel):
-    """Basic profile information."""
+    """Basic profile information (KVKK-compliant - no personal identifiers)."""
 
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    gender: Optional[str] = None
-    emails: List[str] = Field(default_factory=list)
-    urls: List[str] = Field(default_factory=list)
-    phone_numbers: List[str] = Field(default_factory=list)
-    date_of_birth: Optional[DateOfBirth] = None
-    address: Optional[str] = None
-    total_experience_in_years: Optional[str] = None
-    profession: Optional[str] = None
-    summary: Optional[str] = None
-    skills: List[str] = Field(default_factory=list)
-    has_driving_license: bool = False
+    total_experience_in_years: Optional[str] = Field(
+        None, description="Total years of professional experience"
+    )
+    profession: Optional[str] = Field(None, description="Primary profession or role")
+    summary: Optional[str] = Field(
+        None,
+        description="Professional summary WITHOUT personal information or names",
+    )
+    skills: List[str] = Field(
+        default_factory=list, description="List of professional skills"
+    )
+    has_driving_license: bool = Field(
+        default=False, description="Whether candidate has driving license"
+    )
 
 
 class Language(BaseModel):
@@ -118,19 +111,8 @@ class Award(BaseModel):
     description: Optional[str] = None
 
 
-class Reference(BaseModel):
-    """Reference model."""
-
-    full_name: Optional[str] = None
-    phone_number: Optional[str] = None
-    email: Optional[str] = None
-    company: Optional[str] = None
-    position: Optional[str] = None
-    description: Optional[str] = None
-
-
 class CVProfile(BaseModel):
-    """CV profile model."""
+    """CV profile model (KVKK-compliant - no references section)."""
 
     basics: ProfileBasics
     languages: List[Language] = Field(default_factory=list)
@@ -140,7 +122,7 @@ class CVProfile(BaseModel):
     )
     professional_experiences: List[ProfessionalExperience] = Field(default_factory=list)
     awards: List[Award] = Field(default_factory=list)
-    references: List[Reference] = Field(default_factory=list)
+    # references removed for KVKK compliance
 
 
 class ParsedCVData(BaseModel):

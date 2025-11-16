@@ -18,6 +18,7 @@ from app.repositories.parser_repository import get_parser_repository
 from app.schemas.parser import ParsedCVData
 from app.services.file_service import get_file_service
 from app.services.openai_service import get_openai_service
+from app.utils.storage_utils import get_file_storage_manager
 
 
 class ParserService:
@@ -28,6 +29,7 @@ class ParserService:
         self.file_service = get_file_service()
         self.openai_service = get_openai_service()
         self.repository = get_parser_repository()
+        self.storage_manager = get_file_storage_manager()
 
     async def parse_from_text(
         self, session: AsyncSession, user_id: str, session_id: str, text: str
@@ -560,6 +562,26 @@ class ParserService:
                 f"user: {user_id}, file: {file_name}, mode: {parse_mode}"
             )
 
+            # Save file to storage first
+            storage_start = time.time()
+            stored_file_path = None
+            try:
+                stored_file_path = self.storage_manager.save_file(
+                    file_content=file_content,
+                    original_filename=file_name,
+                    job_id=job_id,
+                )
+                storage_time = time.time() - storage_start
+                if stored_file_path:
+                    logger.info(
+                        f"💾 [BACKGROUND] File saved to storage in {storage_time:.2f}s: {stored_file_path}"
+                    )
+            except Exception as storage_error:
+                logger.warning(
+                    f"⚠️ [BACKGROUND] Failed to save file to storage: {str(storage_error)}"
+                )
+                # Continue processing even if storage fails
+
             # Extract text from file
             file_start = time.time()
             extraction_result = await self.file_service.extract_text_from_content(
@@ -604,6 +626,7 @@ class ParserService:
                     record.parsed_data = parsed_result
                     record.input_text = extracted_text[:5000]
                     record.file_mime_type = extraction_result["mime_type"]
+                    record.stored_file_path = stored_file_path
                     record.cv_language = cv_language
                     record.processing_time_seconds = processing_time
                     record.openai_model = metadata.get("model")
@@ -614,7 +637,7 @@ class ParserService:
             logger.info(
                 f"✅ [BACKGROUND] Successfully completed job: {job_id} | "
                 f"Total: {processing_time:.2f}s, File: {file_time:.2f}s, "
-                f"OpenAI: {openai_time:.2f}s"
+                f"OpenAI: {openai_time:.2f}s, Stored: {stored_file_path}"
             )
 
         except Exception as e:

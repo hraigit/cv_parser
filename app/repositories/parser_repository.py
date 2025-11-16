@@ -23,6 +23,7 @@ class ParserRepository:
         input_text: Optional[str] = None,
         file_name: Optional[str] = None,
         file_mime_type: Optional[str] = None,
+        stored_file_path: Optional[str] = None,
         cv_language: Optional[str] = None,
         processing_time_seconds: Optional[float] = None,
         openai_model: Optional[str] = None,
@@ -41,6 +42,7 @@ class ParserRepository:
             input_text: Original input text
             file_name: Original filename
             file_mime_type: File MIME type
+            stored_file_path: Full path to stored file on disk
             cv_language: Detected CV language
             processing_time_seconds: Processing time
             openai_model: OpenAI model used
@@ -64,6 +66,7 @@ class ParserRepository:
                 input_text=input_text,
                 file_name=file_name,
                 file_mime_type=file_mime_type,
+                stored_file_path=stored_file_path,
                 cv_language=cv_language,
                 processing_time_seconds=processing_time_seconds,
                 openai_model=openai_model,

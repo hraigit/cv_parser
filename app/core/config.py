@@ -1,4 +1,5 @@
 """Application configuration using Pydantic Settings."""
+
 from functools import lru_cache
 from typing import Optional
 
@@ -8,12 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Application settings with validation."""
-    
+
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     # Application
@@ -27,7 +25,9 @@ class Settings(BaseSettings):
     PORT: int = Field(default=8000)
 
     # Database
-    DATABASE_URL: str = Field(default="", description="PostgreSQL connection string with asyncpg driver")
+    DATABASE_URL: str = Field(
+        default="", description="PostgreSQL connection string with asyncpg driver"
+    )
     DB_POOL_SIZE: int = Field(default=20)
     DB_MAX_OVERFLOW: int = Field(default=10)
     DB_ECHO: bool = Field(default=False)
@@ -43,6 +43,15 @@ class Settings(BaseSettings):
     MAX_WORKERS: int = Field(default=4)
     CACHE_TTL_SECONDS: int = Field(default=3600)
     CACHE_MAX_SIZE: int = Field(default=1000)
+
+    # File Storage
+    FILE_STORAGE_PATH: str = Field(
+        default="/tmp/cv_parser",
+        description="Path to store uploaded CV files with timestamp",
+    )
+    FILE_STORAGE_ENABLED: bool = Field(
+        default=True, description="Enable/disable file storage to disk"
+    )
 
     # Logging
     LOG_LEVEL: str = Field(default="INFO")
