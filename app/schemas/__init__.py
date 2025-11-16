@@ -1,6 +1,7 @@
 """Schemas package."""
 
-from app.schemas.parser import (
+# CV data structure schemas
+from app.schemas.cv_schemas import (
     Award,
     BasicAward,
     BasicCVProfile,
@@ -18,22 +19,27 @@ from app.schemas.parser import (
     WorkDate,
 )
 
+# API request/response schemas
+from app.schemas.parser import AsyncJobResponse, JobStatusResponse
+
 __all__ = [
-    # Advanced mode models
-    "ParsedCVData",
-    "CVProfile",
-    "ProfileBasics",
-    "Language",
-    "Education",
-    "TrainingCertification",
-    "WorkDate",
-    "ProfessionalExperience",
+    # CV data structures
     "Award",
-    # Basic mode models
-    "BasicParsedCVData",
+    "BasicAward",
     "BasicCVProfile",
     "BasicEducation",
-    "BasicTrainingCertification",
+    "BasicParsedCVData",
     "BasicProfessionalExperience",
-    "BasicAward",
+    "BasicTrainingCertification",
+    "CVProfile",
+    "Education",
+    "Language",
+    "ParsedCVData",
+    "ProfessionalExperience",
+    "ProfileBasics",
+    "TrainingCertification",
+    "WorkDate",
+    # API schemas (actively used)
+    "AsyncJobResponse",
+    "JobStatusResponse",
 ]

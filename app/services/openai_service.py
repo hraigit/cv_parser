@@ -23,7 +23,7 @@ from app.exceptions.custom_exceptions import (
     OpenAIInvalidResponseError,
     OpenAIRateLimitError,
 )
-from app.schemas.parser import BasicParsedCVData, ParsedCVData
+from app.schemas.cv_schemas import BasicParsedCVData, ParsedCVData
 
 # System prompt for ADVANCED CV parsing (KVKK/GDPR-compliant - no personal data)
 CV_PARSE_SYSTEM_PROMPT_ADVANCED = """You are a CV Parser that outputs ONLY valid JSON. Transform resume content to JSON while maintaining source language (TR/EN).
