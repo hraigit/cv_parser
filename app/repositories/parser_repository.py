@@ -32,7 +32,9 @@ class ParserRepository:
         record_id: Optional[UUID] = None,
         _type: Optional[str] = None,
     ) -> ParsedCV:
-        """Create a new parsed CV record.
+        """Create or update a parsed CV record (upsert).
+
+        If a record with the same ID already exists, it will be updated.
 
         Args:
             session: Database session
@@ -52,15 +54,46 @@ class ParserRepository:
             _type: Type of input (e.g., 'pdf', 'free_text')
 
         Returns:
-            Created ParsedCV instance
+            Created or updated ParsedCV instance
 
         Raises:
-            DatabaseError: If creation fails
+            DatabaseError: If operation fails
         """
         try:
+            target_id = record_id or candidate_id
+
+            # Check if record already exists
+            existing = await self.get_by_id(session, target_id)
+
+            if existing:
+                # Update existing record
+                existing.candidate_id = candidate_id
+                existing.parsed_data = parsed_data
+                existing.input_text = input_text
+                existing.file_name = file_name
+                existing.file_mime_type = file_mime_type
+                existing.stored_file_path = stored_file_path
+                existing.cv_language = cv_language
+                existing.processing_time_seconds = processing_time_seconds
+                existing.openai_model = openai_model
+                existing.tokens_used = tokens_used
+                existing.status = status
+                existing.error_message = error_message
+                existing._type = _type
+
+                await session.flush()
+                await session.refresh(existing)
+
+                logger.info(
+                    f"Updated existing parsed CV record: {existing.id} "
+                    f"for candidate: {candidate_id}"
+                )
+
+                return existing
+
+            # Create new record
             parsed_cv = ParsedCV(
-                id=record_id
-                or candidate_id,  # Use candidate_id as id if record_id not provided
+                id=target_id,
                 candidate_id=candidate_id,
                 parsed_data=parsed_data,
                 input_text=input_text,
@@ -88,7 +121,7 @@ class ParserRepository:
             return parsed_cv
 
         except Exception as e:
-            logger.error(f"Failed to create parsed CV record: {str(e)}")
+            logger.error(f"Failed to create/update parsed CV record: {str(e)}")
             raise DatabaseError(f"Failed to create parsed CV: {str(e)}") from e
 
     async def get_by_id(
