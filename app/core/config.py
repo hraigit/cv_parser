@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     # Server
     HOST: str = Field(default="0.0.0.0")
-    PORT: int = Field(default=8000)
+    PORT: int = Field(default=8005)
 
     # Database
     DATABASE_URL: str = Field(

@@ -7,7 +7,7 @@ from pathlib import Path
 import httpx
 
 # Configuration
-BASE_URL = "http://localhost:8000/api/v1/parser"
+BASE_URL = "http://localhost:8005/api/v1/parser"
 TEST_DIR = Path(__file__).parent
 
 
