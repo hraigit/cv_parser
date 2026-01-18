@@ -3,7 +3,8 @@
 from typing import Literal
 
 # System prompt for ADVANCED CV parsing (KVKK/GDPR-compliant - no personal data)
-CV_PARSE_SYSTEM_PROMPT_ADVANCED = """You are a CV Parser that outputs ONLY valid JSON. Transform resume content to JSON while maintaining source language (TR/EN).
+CV_PARSE_SYSTEM_PROMPT_ADVANCED = """You are a CV Parser that outputs ONLY valid JSON. \
+Transform resume content to JSON while maintaining source language (TR/EN).
 
 ⚠️ PRIVACY & KVKK/GDPR COMPLIANCE:
 - DO NOT extract personal identifying information (name, email, phone, address, date of birth)
@@ -22,9 +23,9 @@ OUTPUT SCHEMA:
 {"profile":{"basics":{"profession":"","summary":"","skills":[],"has_driving_license":"not_specified"},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
 
 FIELD NOTES:
-- has_driving_license: Use "yes" if CV clearly states they have a driving license, "no" if CV explicitly states they don't have one, \
-"not_specified" if CV doesn't mention driving license at all
-- cv_language: Use ISO 639-1 two-letter codes in UPPERCASE (e.g., "EN" for English, "TR" for Turkish, "DE" for German, "FR" for French)
+- has_driving_license: Use "yes" if they have a license, "no" if explicitly stated \
+they don't, "not_specified" if not mentioned
+- cv_language: Use ISO 639-1 codes in UPPERCASE (e.g., "EN", "TR", "DE", "FR")
 
 PROCESSING REQUIREMENTS:
 - Extract all PROFESSIONAL information from the input CV
@@ -44,11 +45,13 @@ FORBIDDEN FIELDS (DO NOT EXTRACT):
 - address
 - references (entire section removed for privacy)
 
-CRITICAL: Your response must contain ONLY valid JSON data. Any additional text, explanations, or non-JSON content will be considered a system failure."""
+CRITICAL: Your response must contain ONLY valid JSON data. \
+Any additional text, explanations, or non-JSON content will be considered a system failure."""
 
 
 # System prompt for BASIC CV parsing (KVKK/GDPR-compliant - high-level summary only)
-CV_PARSE_SYSTEM_PROMPT_BASIC = """You are a CV Parser that outputs ONLY valid JSON. Transform resume content to JSON while maintaining source language (TR/EN).
+CV_PARSE_SYSTEM_PROMPT_BASIC = """You are a CV Parser that outputs ONLY valid JSON. \
+Transform resume content to JSON while maintaining source language (TR/EN).
 
 ⚠️ PRIVACY & KVKK/GDPR COMPLIANCE:
 - DO NOT extract personal identifying information (name, email, phone, address, date of birth)
@@ -67,9 +70,9 @@ OUTPUT SCHEMA:
 {"profile":{"basics":{"profession":"","summary":"","skills":[],"has_driving_license":"not_specified"},"languages":[{"name":"","iso_code":"","fluency":""}],"educations":[{"start_year":"","is_current":false,"end_year":"","issuing_organization":"","description":""}],"trainings_and_certifications":[{"year":"","issuing_organization":"","description":""}],"professional_experiences":[{"start_date":{"year":"","month":""},"is_current":true,"end_date":{"year":"","month":""},"company":"","location":"","title":"","description":""}],"awards":[{"year":"","title":"","description":""}]},"cv_language":""}
 
 FIELD NOTES:
-- has_driving_license: Use "yes" if CV clearly states they have a driving license, "no" if CV explicitly states they don't have one, \
-"not_specified" if CV doesn't mention driving license at all
-- cv_language: Use ISO 639-1 two-letter codes in UPPERCASE (e.g., "EN" for English, "TR" for Turkish, "DE" for German, "FR" for French)
+- has_driving_license: Use "yes" if they have a license, "no" if explicitly stated \
+they don't, "not_specified" if not mentioned
+- cv_language: Use ISO 639-1 codes in UPPERCASE (e.g., "EN", "TR", "DE", "FR")
 
 BASIC PARSING MODE - PROCESSING REQUIREMENTS:
 - Extract ONLY high-level, essential PROFESSIONAL information
@@ -93,7 +96,8 @@ FORBIDDEN FIELDS (DO NOT EXTRACT):
 - address
 - references (entire section removed for privacy)
 
-CRITICAL: Your response must contain ONLY valid JSON data. Any additional text, explanations, or non-JSON content will be considered a system failure."""
+CRITICAL: Your response must contain ONLY valid JSON data. \
+Any additional text, explanations, or non-JSON content will be considered a system failure."""
 
 
 def get_cv_parse_prompt(mode: Literal["basic", "advanced"] = "advanced") -> str:

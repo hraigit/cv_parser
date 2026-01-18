@@ -1,12 +1,12 @@
-"""OpenAI service with async-safe singleton pattern."""
+"""Azure OpenAI service with async-safe singleton pattern."""
 
 import asyncio
 import base64
 import json
 import time
-from typing import Any, Dict, List, Literal, Optional, cast
+from typing import Any, Dict, List, Literal, Optional
 
-from openai import AsyncOpenAI
+from openai import AsyncAzureOpenAI
 from openai import OpenAIError as OpenAISDKError
 from openai import RateLimitError
 from openai.types.chat import (
@@ -28,7 +28,7 @@ from app.schemas.cv_schemas import BasicParsedCVData, ParsedCVData
 
 
 class OpenAIService:
-    """Async-safe singleton OpenAI service."""
+    """Async-safe singleton Azure OpenAI service."""
 
     _instance: Optional["OpenAIService"] = None
     _lock = asyncio.Lock()
@@ -39,19 +39,21 @@ class OpenAIService:
         return cls._instance
 
     def __init__(self):
-        """Initialize OpenAI client only once."""
+        """Initialize Azure OpenAI client only once."""
         if hasattr(self, "_initialized"):
             return
 
         self._initialized = True
-        self._client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-        self._model = settings.OPENAI_MODEL  # For Vision API
-        self._text_model = settings.OPENAI_TEXT_MODEL  # For text parsing
+        self._client = AsyncAzureOpenAI(
+            api_key=settings.AZURE_OPENAI_API_KEY,
+            api_version=settings.AZURE_OPENAI_API_VERSION,
+            azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+        )
+        self._deployment = settings.AZURE_OPENAI_DEPLOYMENT
         self._max_tokens = settings.OPENAI_MAX_TOKENS
-        self._temperature = settings.OPENAI_TEMPERATURE
 
         logger.info(
-            f"OpenAI service initialized - Vision: {self._model}, Text: {self._text_model}"
+            f"Azure OpenAI service initialized - Deployment: {self._deployment}"
         )
 
     async def parse_cv(
@@ -77,25 +79,24 @@ class OpenAIService:
 
             if parse_mode == "basic":
                 logger.info(
-                    f"🤖 [TIMING] Starting BASIC OpenAI CV parsing "
+                    f"🤖 [TIMING] Starting BASIC Azure OpenAI CV parsing "
                     f"(text length: {len(cv_text)} chars)"
                 )
             else:
                 logger.info(
-                    f"🤖 [TIMING] Starting ADVANCED OpenAI CV parsing "
+                    f"🤖 [TIMING] Starting ADVANCED Azure OpenAI CV parsing "
                     f"(text length: {len(cv_text)} chars)"
                 )
 
-            # Call OpenAI API
+            # Call Azure OpenAI API
             api_start_time = time.time()
             response = await self._client.chat.completions.create(
-                model=self._text_model,  # Use text model for text parsing
+                model=self._deployment,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": cv_text},
                 ],
-                max_tokens=self._max_tokens,
-                temperature=self._temperature,
+                max_completion_tokens=self._max_tokens,
                 response_format={"type": "json_object"},
             )
             api_time = time.time() - api_start_time
@@ -105,8 +106,8 @@ class OpenAIService:
             tokens_used = response.usage.total_tokens if response.usage else 0
 
             logger.info(
-                f"🤖 [TIMING] OpenAI API call completed in {api_time:.2f} seconds "
-                f"(tokens: {tokens_used}, model: {self._text_model})"
+                f"🤖 [TIMING] Azure OpenAI API call completed in {api_time:.2f} seconds "
+                f"(tokens: {tokens_used}, deployment: {self._deployment})"
             )
 
             # Check if content is None
@@ -167,7 +168,7 @@ class OpenAIService:
 
             # Add metadata
             parsed_data["_metadata"] = {
-                "model": self._text_model,
+                "deployment": self._deployment,
                 "tokens_used": tokens_used,
                 "api_time": round(api_time, 2),
                 "json_parse_time": round(json_time, 3),
@@ -178,17 +179,17 @@ class OpenAIService:
             return parsed_data
 
         except RateLimitError as e:
-            logger.error(f"OpenAI rate limit exceeded: {str(e)}")
+            logger.error(f"Azure OpenAI rate limit exceeded: {str(e)}")
             raise OpenAIRateLimitError(
-                "OpenAI rate limit exceeded. Please try again later."
+                "Azure OpenAI rate limit exceeded. Please try again later."
             ) from e
         except OpenAISDKError as e:
-            logger.error(f"OpenAI API error: {str(e)}")
-            raise OpenAIError(f"OpenAI API error: {str(e)}") from e
+            logger.error(f"Azure OpenAI API error: {str(e)}")
+            raise OpenAIError(f"Azure OpenAI API error: {str(e)}") from e
         except (OpenAIInvalidResponseError, OpenAIRateLimitError):
             raise
         except Exception as e:
-            logger.error(f"Unexpected error during OpenAI call: {str(e)}")
+            logger.error(f"Unexpected error during Azure OpenAI call: {str(e)}")
             raise OpenAIError(f"Failed to parse CV: {str(e)}") from e
 
     async def parse_cv_from_image(
@@ -218,12 +219,13 @@ class OpenAIService:
 
             if parse_mode == "basic":
                 logger.info(
-                    f"🖼️ [VISION] Starting BASIC OpenAI Vision CV parsing "
+                    f"🖼️ [VISION] Starting BASIC Azure OpenAI Vision CV parsing "
                     f"(image type: {mime_type})"
                 )
             else:
                 logger.info(
-                    f"🖼️ [VISION] Starting ADVANCED OpenAI Vision CV parsing (image type: {mime_type})"
+                    f"🖼️ [VISION] Starting ADVANCED Azure OpenAI Vision CV parsing "
+                    f"(image type: {mime_type})"
                 )
 
             # Encode image to base64
@@ -236,9 +238,6 @@ class OpenAIService:
                 "Make sure to extract all visible text and structure it properly."
             )
 
-            # Cast detail to correct literal type
-            detail = cast(Literal["auto", "low", "high"], settings.OPENAI_VISION_DETAIL)
-
             # Build properly typed content parts
             content_parts: List[ChatCompletionContentPartParam] = [
                 ChatCompletionContentPartTextParam(type="text", text=vision_prompt),
@@ -246,15 +245,15 @@ class OpenAIService:
                     type="image_url",
                     image_url={
                         "url": f"data:{mime_type};base64,{base64_image}",
-                        "detail": detail,
+                        "detail": "high",
                     },
                 ),
             ]
 
-            # Call OpenAI Vision API
+            # Call Azure OpenAI Vision API
             api_start_time = time.time()
             response = await self._client.chat.completions.create(
-                model=self._model,
+                model=self._deployment,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {
@@ -272,14 +271,14 @@ class OpenAIService:
             tokens_used = response.usage.total_tokens if response.usage else 0
 
             logger.info(
-                f"🖼️ [VISION] OpenAI Vision API call completed in {api_time:.2f} seconds "
-                f"(tokens: {tokens_used}, model: {self._model})"
+                f"🖼️ [VISION] Azure OpenAI Vision API call completed in {api_time:.2f} seconds "
+                f"(tokens: {tokens_used}, deployment: {self._deployment})"
             )
 
             # Check if content is None
             if content is None:
-                logger.error("OpenAI Vision returned empty content")
-                raise OpenAIInvalidResponseError("OpenAI Vision returned empty content")
+                logger.error("Azure OpenAI Vision returned empty content")
+                raise OpenAIInvalidResponseError("Azure OpenAI Vision returned empty content")
 
             # Parse JSON
             json_start_time = time.time()
@@ -287,10 +286,10 @@ class OpenAIService:
                 parsed_data = json.loads(content)
             except json.JSONDecodeError as e:
                 logger.error(
-                    f"Failed to parse OpenAI Vision response as JSON: {str(e)}"
+                    f"Failed to parse Azure OpenAI Vision response as JSON: {str(e)}"
                 )
                 raise OpenAIInvalidResponseError(
-                    f"OpenAI Vision returned invalid JSON: {str(e)}"
+                    f"Azure OpenAI Vision returned invalid JSON: {str(e)}"
                 ) from e
             json_time = time.time() - json_start_time
 
@@ -329,7 +328,7 @@ class OpenAIService:
 
             # Add metadata
             parsed_data["_metadata"] = {
-                "model": self._model,
+                "deployment": self._deployment,
                 "tokens_used": tokens_used,
                 "api_time": round(api_time, 2),
                 "json_parse_time": round(json_time, 3),
@@ -342,17 +341,17 @@ class OpenAIService:
             return parsed_data
 
         except RateLimitError as e:
-            logger.error(f"OpenAI Vision rate limit exceeded: {str(e)}")
+            logger.error(f"Azure OpenAI Vision rate limit exceeded: {str(e)}")
             raise OpenAIRateLimitError(
-                "OpenAI rate limit exceeded. Please try again later."
+                "Azure OpenAI rate limit exceeded. Please try again later."
             ) from e
         except OpenAISDKError as e:
-            logger.error(f"OpenAI Vision API error: {str(e)}")
-            raise OpenAIError(f"OpenAI Vision API error: {str(e)}") from e
+            logger.error(f"Azure OpenAI Vision API error: {str(e)}")
+            raise OpenAIError(f"Azure OpenAI Vision API error: {str(e)}") from e
         except (OpenAIInvalidResponseError, OpenAIRateLimitError):
             raise
         except Exception as e:
-            logger.error(f"Unexpected error during OpenAI Vision call: {str(e)}")
+            logger.error(f"Unexpected error during Azure OpenAI Vision call: {str(e)}")
             raise OpenAIError(f"Failed to parse CV from image: {str(e)}") from e
 
     async def extract_entities(
@@ -371,20 +370,19 @@ class OpenAIService:
             entity_prompt = self._build_entity_extraction_prompt(entity_types)
 
             response = await self._client.chat.completions.create(
-                model=self._model,
+                model=self._deployment,
                 messages=[
                     {"role": "system", "content": entity_prompt},
                     {"role": "user", "content": text},
                 ],
-                max_tokens=self._max_tokens,
-                temperature=self._temperature,
+                max_completion_tokens=self._max_tokens,
                 response_format={"type": "json_object"},
             )
 
             content = response.choices[0].message.content
             if content is None:
-                logger.error("OpenAI returned empty content")
-                raise OpenAIInvalidResponseError("OpenAI returned empty content")
+                logger.error("Azure OpenAI returned empty content")
+                raise OpenAIInvalidResponseError("Azure OpenAI returned empty content")
             return json.loads(content)
 
         except Exception as e:

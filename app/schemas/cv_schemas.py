@@ -18,7 +18,7 @@ class ProfileBasics(BaseModel):
     )
     has_driving_license: Optional[str] = Field(
         default="not_specified",
-        description="Driving license status: 'yes', 'no', or 'not_specified' if not mentioned in CV",
+        description="Driving license status: 'yes', 'no', or 'not_specified'",
     )
     total_experience_in_years: Optional[float] = Field(
         None, description="Total years of professional experience (calculated)"
@@ -121,7 +121,7 @@ class Award(BaseModel):
 
 # ADVANCED MODE - Full CV Profile with all details
 class CVProfile(BaseModel):
-    """CV profile model (KVKK-compliant - no references section) - ADVANCED MODE with full details."""
+    """CV profile model (KVKK-compliant) - ADVANCED MODE with full details."""
 
     basics: ProfileBasics
     languages: List[Language] = Field(default_factory=list)

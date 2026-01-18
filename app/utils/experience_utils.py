@@ -23,7 +23,7 @@ MONTH_MAPPING = {
     "feb": 2,
     "mar": 3,
     "apr": 4,
-    "may": 5,
+    # "may" is already defined above (same for full and abbreviated)
     "jun": 6,
     "jul": 7,
     "aug": 8,
