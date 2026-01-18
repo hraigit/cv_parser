@@ -32,17 +32,14 @@ class Settings(BaseSettings):
     DB_MAX_OVERFLOW: int = Field(default=10)
     DB_ECHO: bool = Field(default=False)
 
-    # OpenAI
-    OPENAI_API_KEY: str = Field(default="")
-    OPENAI_MODEL: str = Field(default="gpt-4o-mini", description="Default/Vision model")
-    OPENAI_TEXT_MODEL: str = Field(
-        default="gpt-3.5-turbo", description="Model for text-based CV parsing"
+    # Azure OpenAI
+    AZURE_OPENAI_API_KEY: str = Field(default="")
+    AZURE_OPENAI_ENDPOINT: str = Field(default="")
+    AZURE_OPENAI_API_VERSION: str = Field(default="2024-12-01-preview")
+    AZURE_OPENAI_DEPLOYMENT: str = Field(
+        default="gpt-5-mini-cv-parse", description="Azure OpenAI deployment name for both text and vision"
     )
-    OPENAI_MAX_TOKENS: int = Field(default=3000)
-    OPENAI_TEMPERATURE: float = Field(default=0.1)
-    OPENAI_VISION_DETAIL: str = Field(
-        default="high", description="Vision API detail level: low, high, or auto"
-    )
+    OPENAI_MAX_TOKENS: int = Field(default=16384)
 
     # File Processing
     MAX_FILE_SIZE_MB: int = Field(default=10)
@@ -77,15 +74,7 @@ class Settings(BaseSettings):
             raise ValueError(f"LOG_LEVEL must be one of {valid_levels}")
         return v.upper()
 
-    @field_validator("OPENAI_TEMPERATURE")
-    @classmethod
-    def validate_temperature(cls, v: float) -> float:
-        """Validate OpenAI temperature."""
-        if not 0 <= v <= 2:
-            raise ValueError("OPENAI_TEMPERATURE must be between 0 and 2")
-        return v
-
-    @field_validator("DATABASE_URL", "OPENAI_API_KEY", "SECRET_KEY")
+    @field_validator("DATABASE_URL", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_ENDPOINT", "SECRET_KEY")
     @classmethod
     def validate_required_fields(cls, v: str) -> str:
         """Ensure required fields are not empty."""
