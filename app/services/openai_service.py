@@ -224,7 +224,8 @@ class OpenAIService:
                 )
             else:
                 logger.info(
-                    f"🖼️ [VISION] Starting ADVANCED Azure OpenAI Vision CV parsing (image type: {mime_type})"
+                    f"🖼️ [VISION] Starting ADVANCED Azure OpenAI Vision CV parsing "
+                    f"(image type: {mime_type})"
                 )
 
             # Encode image to base64

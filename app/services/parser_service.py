@@ -186,7 +186,8 @@ class ParserService:
                 storage_time = time.time() - storage_start
                 if stored_file_path:
                     logger.info(
-                        f"💾 [BACKGROUND] File saved to storage in {storage_time:.2f}s: {stored_file_path}"
+                        f"💾 [BACKGROUND] File saved to storage in "
+                        f"{storage_time:.2f}s: {stored_file_path}"
                     )
             except Exception as storage_error:
                 logger.warning(

@@ -37,7 +37,8 @@ class Settings(BaseSettings):
     AZURE_OPENAI_ENDPOINT: str = Field(default="")
     AZURE_OPENAI_API_VERSION: str = Field(default="2024-12-01-preview")
     AZURE_OPENAI_DEPLOYMENT: str = Field(
-        default="gpt-5-mini-cv-parse", description="Azure OpenAI deployment name for both text and vision"
+        default="gpt-5-mini-cv-parse",
+        description="Azure OpenAI deployment name for both text and vision",
     )
     OPENAI_MAX_TOKENS: int = Field(default=16384)
 
