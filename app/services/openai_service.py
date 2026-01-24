@@ -51,9 +51,11 @@ class OpenAIService:
         )
         self._deployment = settings.AZURE_OPENAI_DEPLOYMENT
         self._max_tokens = settings.OPENAI_MAX_TOKENS
+        self._reasoning_effort = settings.AZURE_OPENAI_REASONING_EFFORT
 
         logger.info(
-            f"Azure OpenAI service initialized - Deployment: {self._deployment}"
+            f"Azure OpenAI service initialized - Deployment: {self._deployment}, "
+            f"Reasoning effort: {self._reasoning_effort or 'disabled'}"
         )
 
     async def parse_cv(
@@ -90,15 +92,23 @@ class OpenAIService:
 
             # Call Azure OpenAI API
             api_start_time = time.time()
-            response = await self._client.chat.completions.create(
-                model=self._deployment,
-                messages=[
+
+            # Build API call parameters
+            api_params: Dict[str, Any] = {
+                "model": self._deployment,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": cv_text},
                 ],
-                max_completion_tokens=self._max_tokens,
-                response_format={"type": "json_object"},
-            )
+                "max_completion_tokens": self._max_tokens,
+                "response_format": {"type": "json_object"},
+            }
+
+            # Add reasoning_effort for o-series models if configured
+            if self._reasoning_effort:
+                api_params["reasoning_effort"] = self._reasoning_effort
+
+            response = await self._client.chat.completions.create(**api_params)
             api_time = time.time() - api_start_time
 
             # Extract content
@@ -252,18 +262,26 @@ class OpenAIService:
 
             # Call Azure OpenAI Vision API
             api_start_time = time.time()
-            response = await self._client.chat.completions.create(
-                model=self._deployment,
-                messages=[
+
+            # Build API call parameters
+            api_params: Dict[str, Any] = {
+                "model": self._deployment,
+                "messages": [
                     {"role": "system", "content": system_prompt},
                     {
                         "role": "user",
                         "content": content_parts,
                     },
                 ],
-                max_completion_tokens=self._max_tokens,
-                response_format={"type": "json_object"},
-            )
+                "max_completion_tokens": self._max_tokens,
+                "response_format": {"type": "json_object"},
+            }
+
+            # Add reasoning_effort for o-series models if configured
+            if self._reasoning_effort:
+                api_params["reasoning_effort"] = self._reasoning_effort
+
+            response = await self._client.chat.completions.create(**api_params)
             api_time = time.time() - api_start_time
 
             # Extract content
@@ -369,15 +387,22 @@ class OpenAIService:
         try:
             entity_prompt = self._build_entity_extraction_prompt(entity_types)
 
-            response = await self._client.chat.completions.create(
-                model=self._deployment,
-                messages=[
+            # Build API call parameters
+            api_params: Dict[str, Any] = {
+                "model": self._deployment,
+                "messages": [
                     {"role": "system", "content": entity_prompt},
                     {"role": "user", "content": text},
                 ],
-                max_completion_tokens=self._max_tokens,
-                response_format={"type": "json_object"},
-            )
+                "max_completion_tokens": self._max_tokens,
+                "response_format": {"type": "json_object"},
+            }
+
+            # Add reasoning_effort for o-series models if configured
+            if self._reasoning_effort:
+                api_params["reasoning_effort"] = self._reasoning_effort
+
+            response = await self._client.chat.completions.create(**api_params)
 
             content = response.choices[0].message.content
             if content is None:

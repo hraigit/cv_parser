@@ -41,6 +41,10 @@ class Settings(BaseSettings):
         description="Azure OpenAI deployment name for both text and vision",
     )
     OPENAI_MAX_TOKENS: int = Field(default=16384)
+    AZURE_OPENAI_REASONING_EFFORT: Optional[str] = Field(
+        default=None,
+        description="Reasoning effort for o-series models: 'low', 'medium', or 'high'. Set to None to disable.",
+    )
 
     # File Processing
     MAX_FILE_SIZE_MB: int = Field(default=10)

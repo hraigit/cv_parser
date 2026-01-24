@@ -1,7 +1,6 @@
 """Repository for parser database operations."""
 
 from typing import Optional
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +16,7 @@ class ParserRepository:
     async def create(
         self,
         session: AsyncSession,
-        candidate_id: UUID,
+        candidate_id: str,
         parsed_data: dict,
         input_text: Optional[str] = None,
         file_name: Optional[str] = None,
@@ -29,7 +28,7 @@ class ParserRepository:
         tokens_used: Optional[int] = None,
         status: str = "success",
         error_message: Optional[str] = None,
-        record_id: Optional[UUID] = None,
+        record_id: Optional[str] = None,
         _type: Optional[str] = None,
     ) -> ParsedCV:
         """Create or update a parsed CV record (upsert).
@@ -125,7 +124,7 @@ class ParserRepository:
             raise DatabaseError(f"Failed to create parsed CV: {str(e)}") from e
 
     async def get_by_id(
-        self, session: AsyncSession, record_id: UUID
+        self, session: AsyncSession, record_id: str
     ) -> Optional[ParsedCV]:
         """Get parsed CV by ID.
 
@@ -148,7 +147,7 @@ class ParserRepository:
             raise DatabaseError(f"Failed to retrieve parsed CV: {str(e)}") from e
 
     async def get_by_candidate_id(
-        self, session: AsyncSession, candidate_id: UUID
+        self, session: AsyncSession, candidate_id: str
     ) -> Optional[ParsedCV]:
         """Get parsed CV by candidate ID.
 
@@ -175,7 +174,7 @@ class ParserRepository:
     async def update_status(
         self,
         session: AsyncSession,
-        record_id: UUID,
+        record_id: str,
         status: str,
         error_message: Optional[str] = None,
     ) -> ParsedCV:
@@ -216,7 +215,7 @@ class ParserRepository:
             logger.error(f"Failed to update parsed CV status: {str(e)}")
             raise DatabaseError(f"Failed to update parsed CV: {str(e)}") from e
 
-    async def delete(self, session: AsyncSession, record_id: UUID) -> bool:
+    async def delete(self, session: AsyncSession, record_id: str) -> bool:
         """Delete parsed CV record.
 
         Args:

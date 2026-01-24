@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import DateTime, Index, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -16,14 +16,14 @@ class ParsedCV(Base):
 
     __tablename__ = "parsed_cvs"
 
-    # Primary key - using candidate_id as both primary key and identifier
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, index=True
+    # Primary key
+    id: Mapped[str] = mapped_column(
+        String, primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
 
-    # Candidate identifier (replaces user_id and session_id)
-    candidate_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False, unique=True, index=True
+    # Candidate identifier
+    candidate_id: Mapped[str] = mapped_column(
+        String, nullable=False, unique=True, index=True
     )
 
     # Input data

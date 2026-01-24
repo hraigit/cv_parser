@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -10,7 +9,7 @@ from pydantic import BaseModel, Field
 class AsyncJobResponse(BaseModel):
     """Response model for async job creation."""
 
-    candidate_id: UUID = Field(
+    candidate_id: str = Field(
         ..., description="Candidate identifier (used as job ID for tracking)"
     )
     status: str = Field(default="processing", description="Initial job status")
@@ -27,7 +26,7 @@ class AsyncJobResponse(BaseModel):
 class JobStatusResponse(BaseModel):
     """Response model for job status polling."""
 
-    candidate_id: UUID = Field(..., description="Candidate identifier (same as job ID)")
+    candidate_id: str = Field(..., description="Candidate identifier (same as job ID)")
     status: str = Field(
         ..., description="Current job status: processing, success, failed"
     )
