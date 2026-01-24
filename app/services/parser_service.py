@@ -2,7 +2,6 @@
 
 import time
 from typing import Any, Dict, Literal, Optional
-from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -69,7 +68,7 @@ class ParserService:
         return parsed_data
 
     async def get_parse_result(
-        self, session: AsyncSession, record_id: UUID
+        self, session: AsyncSession, record_id: str
     ) -> Optional[Dict[str, Any]]:
         """Get parse result by ID.
 
@@ -107,7 +106,7 @@ class ParserService:
     async def create_placeholder_job(
         self,
         session: AsyncSession,
-        candidate_id: UUID,
+        candidate_id: str,
         file_name: Optional[str] = None,
         _type: Optional[str] = None,
     ) -> Dict[str, Any]:
@@ -150,7 +149,7 @@ class ParserService:
 
     async def process_file_background(
         self,
-        candidate_id: UUID,
+        candidate_id: str,
         file_content: bytes,
         file_name: str,
         parse_mode: Literal["basic", "advanced"] = "advanced",
@@ -300,7 +299,7 @@ class ParserService:
 
     async def process_text_background(
         self,
-        candidate_id: UUID,
+        candidate_id: str,
         text: str,
         parse_mode: Literal["basic", "advanced"] = "advanced",
     ):

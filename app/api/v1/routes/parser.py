@@ -1,7 +1,5 @@
 """Parser API routes."""
 
-from uuid import UUID
-
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -29,7 +27,7 @@ router = APIRouter(prefix="/parser", tags=["Parser"])
     summary="Get parse result by candidate ID",
     description="Retrieve parsed CV result by candidate ID",
 )
-async def get_result(candidate_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_result(candidate_id: str, db: AsyncSession = Depends(get_db)):
     """Get parse result by candidate ID.
 
     Args:
@@ -171,7 +169,7 @@ async def get_cache_stats():
 )
 async def parse_file_async(
     background_tasks: BackgroundTasks,
-    candidate_id: UUID = Form(..., description="Candidate identifier (used as job ID)"),
+    candidate_id: str = Form(..., description="Candidate identifier (used as job ID)"),
     file: UploadFile = File(..., description="CV file to parse"),
     parse_mode: str = Form("advanced", description="Parse mode: 'basic' or 'advanced'"),
     db: AsyncSession = Depends(get_db),
@@ -257,7 +255,7 @@ async def parse_file_async(
 )
 async def parse_text_async(
     background_tasks: BackgroundTasks,
-    candidate_id: UUID = Form(..., description="Candidate identifier (used as job ID)"),
+    candidate_id: str = Form(..., description="Candidate identifier (used as job ID)"),
     text: str = Form(..., description="CV text content (formatted or free-form)"),
     parse_mode: str = Form("advanced", description="Parse mode: 'basic' or 'advanced'"),
     db: AsyncSession = Depends(get_db),
@@ -333,7 +331,7 @@ async def parse_text_async(
         "Returns 'processing', 'success', or 'failed'."
     ),
 )
-async def get_job_status(candidate_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_job_status(candidate_id: str, db: AsyncSession = Depends(get_db)):
     """Get status of async parsing job.
 
     Args:
