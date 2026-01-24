@@ -3,7 +3,6 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from uuid import UUID
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -31,7 +30,7 @@ class FileStorageManager:
             raise
 
     def generate_filename(
-        self, original_filename: str, job_id: Optional[UUID] = None
+        self, original_filename: str, job_id: Optional[str] = None
     ) -> str:
         """Generate unique filename with timestamp.
 
@@ -72,7 +71,7 @@ class FileStorageManager:
         return unique_name
 
     def save_file(
-        self, file_content: bytes, original_filename: str, job_id: Optional[UUID] = None
+        self, file_content: bytes, original_filename: str, job_id: Optional[str] = None
     ) -> Optional[str]:
         """Save file to storage directory.
 
