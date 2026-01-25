@@ -61,8 +61,11 @@ class ParserRepository:
         try:
             target_id = record_id or candidate_id
 
-            # Check if record already exists
+            # Check if record already exists by ID first, then by candidate_id
             existing = await self.get_by_id(session, target_id)
+            if not existing:
+                # Also check by candidate_id to handle updates for existing candidates
+                existing = await self.get_by_candidate_id(session, candidate_id)
 
             if existing:
                 # Update existing record
