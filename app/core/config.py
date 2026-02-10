@@ -64,7 +64,7 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = Field(default="INFO")
     LOG_FORMAT: str = Field(default="text")
-    LOG_FILE_PATH: Optional[str] = Field(default="logs/app.log")
+    LOG_FILE_PATH: Optional[str] = Field(default="/tmp/cv-parser.log")
 
     # Security
     SECRET_KEY: str = Field(default="")
