@@ -25,8 +25,8 @@ def upgrade() -> None:
     # Create parsed_cvs table
     op.create_table(
         "parsed_cvs",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("candidate_id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("id", sa.String(), nullable=False),
+        sa.Column("candidate_id", sa.String(), nullable=False),
         sa.Column("input_text", sa.Text(), nullable=True),
         sa.Column("file_name", sa.String(length=500), nullable=True),
         sa.Column("file_mime_type", sa.String(length=100), nullable=True),
