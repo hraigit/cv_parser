@@ -80,13 +80,13 @@ class DatabaseManager:
         return self._session_factory
 
     async def create_tables(self):
-        """Create all database tables."""
+        """Create all database tables if they don't exist."""
         try:
             async with self.engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
-            logger.info("Database tables created successfully")
+            logger.info("Database tables verified/created successfully")
         except Exception as e:
-            logger.error(f"Failed to create database tables: {str(e)}")
+            logger.error(f"Failed to verify/create database tables: {str(e)}")
             raise
 
     async def close(self):
