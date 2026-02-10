@@ -54,7 +54,7 @@ class Settings(BaseSettings):
 
     # File Storage
     FILE_STORAGE_PATH: str = Field(
-        default="/tmp/cv_parser",
+        default="/tmp/cv_parser_files",
         description="Path to store uploaded CV files with timestamp",
     )
     FILE_STORAGE_ENABLED: bool = Field(
